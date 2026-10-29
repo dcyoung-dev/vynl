@@ -1,0 +1,8 @@
+---
+import Base from '../layouts/Base.astro';
+import CallbackHandler from '../components/auth/CallbackHandler';
+---
+
+<Base title="Signing in · Vynl">
+  <CallbackHandler client:only="react" />
+</Base>
