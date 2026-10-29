@@ -117,13 +117,17 @@
   }
 }
 
-/* The arm's height above the record: down on the grooves while playing, raised when resting (screen units). */
+/*
+ * Raising the arm tilts it about the pivot, like a cueing lever: a point at distance x along the arm rises by x * tilt.
+ * In the floor plane that is a shear, matrix(1 + a, a, 0, 1), with a = tilt / (2 * 0.4) for the deck's camera (deck.ts).
+ * 8 units of rise over the 150-unit arm is a tilt of 0.053: down on the grooves while playing, up when resting.
+ */
 @utility tonearm-lift {
-  translate: 0 -10px;
-  transition: translate 300ms cubic-bezier(0.4, 0, 0.2, 1) 650ms;
+  transform: matrix(1.0667, 0.0667, 0, 1, 0, 0);
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1) 650ms;
 
   :where(.tonearm[data-resting]) & {
-    translate: 0 -24px;
+    transform: matrix(0.9333, -0.0667, 0, 1, 0, 0);
     transition-delay: 0ms;
   }
 }

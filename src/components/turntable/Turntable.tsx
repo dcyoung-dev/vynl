@@ -34,18 +34,18 @@ export default function Turntable({
   const currentTrack = album?.tracks[position.trackIndex];
 
   return (
-    <section aria-label="Turntable" className="flex w-full max-w-md flex-col items-center gap-6">
+    <section aria-label="Turntable" className="flex w-full max-w-4xl flex-col items-center gap-6">
       {album && (
-        <div className="w-3/5">
-          <CoverArt album={album} />
-        </div>
-      )}
-      {album && (
-        <div data-testid="now-playing" className="text-center text-vanilla-custard">
-          {currentTrack && <p className="font-display text-xl">{currentTrack.name}</p>}
-          <p className="text-sm">
-            {album.name} · {album.artists.join(', ')}
-          </p>
+        <div className="flex w-full max-w-xl items-center gap-4">
+          <div className="w-20 shrink-0">
+            <CoverArt album={album} />
+          </div>
+          <div data-testid="now-playing" className="min-w-0 text-left text-vanilla-custard">
+            {currentTrack && <p className="font-display text-xl">{currentTrack.name}</p>}
+            <p className="text-sm">
+              {album.name} · {album.artists.join(', ')}
+            </p>
+          </div>
         </div>
       )}
       <div className="relative aspect-[440/320] w-full">
