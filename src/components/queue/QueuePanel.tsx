@@ -1,7 +1,8 @@
 import { useId } from 'react';
 import { useAppState } from '../../lib/store/AppState';
 import type { Album } from '../../lib/store/queue';
-import { secondaryButton, spotifyAlbumUrl, spotifyLink } from '../browse/AlbumCard';
+import { usePlayNow } from '../browse/PlayNow';
+import { primaryButton, secondaryButton, spotifyAlbumUrl, spotifyLink } from '../browse/AlbumCard';
 
 export interface QueuePanelProps {
   /** KTD8: a follower tab lists the queue without "Move up", "Move down" or "Remove". */
@@ -12,6 +13,7 @@ export interface QueuePanelProps {
 export default function QueuePanel({ isFollower }: QueuePanelProps) {
   const { state, dispatch } = useAppState();
   const headingId = useId();
+  const playNow = usePlayNow();
 
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-4 text-vanilla-custard">
@@ -29,6 +31,11 @@ export default function QueuePanel({ isFollower }: QueuePanelProps) {
               isFirst={index === 0}
               isLast={index === state.queue.length - 1}
               isFollower={isFollower}
+              onPlayNow={() => {
+                playNow.activate?.();
+                dispatch({ type: 'remove', index });
+                void playNow(album);
+              }}
               onMoveUp={() => dispatch({ type: 'moveUp', index })}
               onMoveDown={() => dispatch({ type: 'moveDown', index })}
               onRemove={() => dispatch({ type: 'remove', index })}
@@ -45,12 +52,13 @@ interface QueueItemProps {
   isFirst: boolean;
   isLast: boolean;
   isFollower: boolean;
+  onPlayNow: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onRemove: () => void;
 }
 
-function QueueItem({ album, isFirst, isLast, isFollower, onMoveUp, onMoveDown, onRemove }: QueueItemProps) {
+function QueueItem({ album, isFirst, isLast, isFollower, onPlayNow, onMoveUp, onMoveDown, onRemove }: QueueItemProps) {
   const nameId = useId();
   return (
     <li aria-labelledby={nameId} className="flex gap-3 rounded-md border border-muted-teal/60 p-2">
@@ -69,6 +77,9 @@ function QueueItem({ album, isFirst, isLast, isFollower, onMoveUp, onMoveDown, o
         </a>
         {!isFollower && (
           <div className="flex flex-wrap gap-2 pt-1">
+            <button type="button" className={primaryButton} onClick={onPlayNow}>
+              Play now
+            </button>
             <button type="button" className={secondaryButton} disabled={isFirst} onClick={onMoveUp}>
               Move up
             </button>

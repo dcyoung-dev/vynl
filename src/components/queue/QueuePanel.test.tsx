@@ -46,6 +46,12 @@ describe('QueuePanel', () => {
     expect(within(item('Album a')).getByText('Artist a')).toBeInTheDocument();
   });
 
+  it('Play now takes the album off the queue and starts it', () => {
+    setup([album('a'), album('b')]);
+    fireEvent.click(within(item('Album b')).getByRole('button', { name: 'Play now' }));
+    expect(names()).toEqual(['Album a']);
+  });
+
   it('Move up on the second item swaps it with the first', () => {
     setup([album('a'), album('b'), album('c')]);
     fireEvent.click(within(item('Album b')).getByRole('button', { name: 'Move up' }));
