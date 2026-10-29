@@ -47,7 +47,7 @@ describe('Record', () => {
     const label = screen.getByTestId('record-label');
     expect(label).toHaveTextContent('Kind of Blue');
     expect(label).toHaveTextContent('Miles Davis, John Coltrane');
-    expect(label).toHaveClass('bg-night-bordeaux', 'text-vanilla-custard');
+    expect(label).toHaveClass('fill-vanilla-custard');
     expect(container.querySelector('img')).toBeNull();
   });
 

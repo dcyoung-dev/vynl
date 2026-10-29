@@ -1,6 +1,7 @@
 import type { Album, PlaybackStatus, Position } from '../../lib/store/queue';
 import Controls from './Controls';
 import CoverArt from './CoverArt';
+import Plinth from './Plinth';
 import Record from './Record';
 import Tonearm, { albumProgress } from './Tonearm';
 import TrackList from './TrackList';
@@ -47,7 +48,8 @@ export default function Turntable({
           </p>
         </div>
       )}
-      <div className="relative aspect-square w-full rounded-2xl bg-neutral-800 p-[6%] shadow-xl shadow-neutral-950/50">
+      <div className="relative aspect-[440/320] w-full">
+        <Plinth playing={status === 'Playing' || status === 'Mirroring' || status === 'AlbumEnding'} />
         <Record album={album} status={status} />
         <Tonearm status={status} progress={albumProgress(album, position)} />
       </div>

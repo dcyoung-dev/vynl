@@ -35,19 +35,19 @@
   @keyframes record-wobble {
     0%,
     100% {
-      transform: rotateX(0deg) rotateY(0deg);
+      translate: 0 0;
     }
     21% {
-      transform: rotateX(1.8deg) rotateY(-0.6deg);
+      translate: 0.5px -0.3px;
     }
     47% {
-      transform: rotateX(-0.4deg) rotateY(1.3deg);
+      translate: -0.3px 0.4px;
     }
     68% {
-      transform: rotateX(-1.2deg) rotateY(-0.2deg);
+      translate: -0.5px -0.2px;
     }
     86% {
-      transform: rotateX(0.5deg) rotateY(-1deg);
+      translate: 0.3px 0.3px;
     }
   }
 }
@@ -92,21 +92,24 @@
 }
 
 /*
- * The arm pivots at its top end. Its angle comes from --tonearm-progress (0 to 1),
+ * The arm swings about its pivot, in the deck's floor plane. Its angle comes from --tonearm-progress (0 to 1),
  * set by the component, between the outer and inner groove angles (KTD19).
- * The three angles are tuned by eye for the deck layout in Turntable.tsx.
+ * The three angles are solved so the needle lands on the outermost and innermost grooves of the record in deck.ts.
  */
 @utility tonearm {
-  --tonearm-rest: -14deg;
-  --tonearm-outer: 8deg;
-  --tonearm-inner: 30deg;
-  transform-origin: 50% 0;
+  --tonearm-rest: 100deg;
+  --tonearm-outer: 119deg;
+  --tonearm-inner: 166deg;
+}
+
+@utility tonearm-swing {
+  transform-origin: 0 0;
   rotate: calc(
     var(--tonearm-outer) + var(--tonearm-progress, 0) * (var(--tonearm-inner) - var(--tonearm-outer))
   );
   transition: rotate 700ms cubic-bezier(0.4, 0, 0.2, 1);
 
-  &[data-resting] {
+  :where(.tonearm[data-resting]) & {
     rotate: var(--tonearm-rest);
   }
 }
