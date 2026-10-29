@@ -311,6 +311,7 @@ describe('signed in', () => {
     const trackRail = screen.getByRole('complementary', { name: 'Album tracks' });
 
     expect(body.className).toMatch(/md:grid-cols-/);
+    expect(body).toHaveClass('content-start');
     expect(queue?.parentElement?.parentElement).toBe(main);
     expect(turntable.compareDocumentPosition(queue!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(trackRail.parentElement).toBe(body);

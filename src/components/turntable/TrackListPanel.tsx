@@ -46,7 +46,7 @@ export default function TrackListPanel({
         aria-expanded={open}
         aria-controls={drawerId}
         onClick={() => setOpen(true)}
-        className="justify-self-start rounded-full border border-muted-teal px-3 py-1.5 text-vanilla-custard hover:bg-night-bordeaux/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-honey-bronze md:hidden"
+        className="self-start justify-self-start rounded-full border border-muted-teal px-3 py-1.5 text-vanilla-custard hover:bg-night-bordeaux/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-honey-bronze md:hidden"
       >
         Tracks
       </button>

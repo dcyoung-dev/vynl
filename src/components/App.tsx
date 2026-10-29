@@ -266,7 +266,7 @@ function Shell({ locks, createController = createPlaybackController, authLost, o
         />
         <div
           data-testid="app-body"
-          className={`grid flex-1 grid-cols-1 gap-8 p-4 md:grid-cols-[minmax(0,1fr)_20rem] ${drawer.open ? 'md:pl-100' : ''}`}
+          className={`grid flex-1 grid-cols-1 content-start gap-8 p-4 md:grid-cols-[minmax(0,1fr)_20rem] ${drawer.open ? 'md:pl-100' : ''}`}
         >
           <TrackListPanel
             tracks={current?.tracks ?? []}
