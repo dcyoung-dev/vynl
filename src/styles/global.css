@@ -19,4 +19,94 @@
   --color-muted-teal: oklch(71.2% 0.043 130.5);
   --color-vanilla-custard: oklch(95.8% 0.086 99.2);
   --color-night-bordeaux: oklch(29.1% 0.104 24.9);
+
+  /* KTD19: 33⅓ rpm is 1.8s a turn. Reduced motion slows it rather than stopping it. */
+  --animate-spin-record: spin-record 1.8s linear infinite;
+  --animate-spin-record-slow: spin-record 9s linear infinite;
+  /* The wobble's period is not a multiple of the spin, so the warp never settles into a pattern. */
+  --animate-record-wobble: record-wobble 4.3s ease-in-out infinite;
+
+  @keyframes spin-record {
+    to {
+      rotate: 360deg;
+    }
+  }
+
+  @keyframes record-wobble {
+    0%,
+    100% {
+      transform: rotateX(0deg) rotateY(0deg);
+    }
+    21% {
+      transform: rotateX(1.8deg) rotateY(-0.6deg);
+    }
+    47% {
+      transform: rotateX(-0.4deg) rotateY(1.3deg);
+    }
+    68% {
+      transform: rotateX(-1.2deg) rotateY(-0.2deg);
+    }
+    86% {
+      transform: rotateX(0.5deg) rotateY(-1deg);
+    }
+  }
+}
+
+/*
+ * Pausing keeps the record where it is instead of jumping back to 0deg (KTD19).
+ * Important, because any later `animation` shorthand (such as the motion-reduce spin) resets the play state.
+ */
+@utility animate-paused {
+  animation-play-state: paused !important;
+}
+
+/* Neutral black vinyl with fine groove rings and a run-out band around the label. */
+@utility record-grooves {
+  background-color: var(--color-neutral-950);
+  background-image:
+    radial-gradient(
+      circle,
+      transparent 0 33%,
+      var(--color-neutral-900) 33% 36%,
+      transparent 36% 94%,
+      var(--color-neutral-900) 94% 100%
+    ),
+    repeating-radial-gradient(
+      circle,
+      var(--color-neutral-950) 0 1.5px,
+      var(--color-neutral-900) 1.5px 2.5px
+    );
+}
+
+/* Light catching the grooves. It sits above the spinning record and stays still, as a reflection would. */
+@utility record-sheen {
+  background-image: conic-gradient(
+    from 30deg,
+    transparent 0deg,
+    color-mix(in oklch, var(--color-white) 12%, transparent) 25deg,
+    transparent 60deg,
+    transparent 180deg,
+    color-mix(in oklch, var(--color-white) 9%, transparent) 210deg,
+    transparent 245deg
+  );
+}
+
+/*
+ * The arm pivots at its top end. Its angle comes from --tonearm-progress (0 to 1),
+ * set by the component, between the outer and inner groove angles (KTD19).
+ * The three angles are tuned by eye for the deck layout in Turntable.tsx.
+ */
+@utility tonearm {
+  --tonearm-rest: -14deg;
+  --tonearm-outer: 8deg;
+  --tonearm-inner: 30deg;
+  transform-origin: 50% 0;
+  rotate: calc(
+    var(--tonearm-outer) + var(--tonearm-progress, 0) * (var(--tonearm-inner) - var(--tonearm-outer))
+  );
+  transition: rotate 700ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  &[data-resting] {
+    rotate: var(--tonearm-rest);
+  }
 }
