@@ -51,6 +51,18 @@ describe('classify', () => {
     expect(verdict).toEqual({ kind: 'album', trackIndex: 2, positionMs: 5_000 });
   });
 
+  it('treats a track Spotify relinked to another release as the album (linked_from)', () => {
+    const relinked = { trackUri: 'spotify:track:r1', trackAlbumUri: 'spotify:album:other', linkedFromUri: A.tracks[LAST].uri };
+    expect(classify(instance({ confirmed: false }), obs(relinked), 10, GRACE_MS_LOCAL)).toEqual({
+      kind: 'album',
+      trackIndex: LAST,
+      positionMs: 1_000,
+    });
+    expect(classify(instance(), obs({ ...relinked, paused: true, positionMs: 0 }), END, GRACE_MS_LOCAL)).toMatchObject({
+      kind: 'ended',
+    });
+  });
+
   it('ends when autoplay plays another album in the same context inside the window', () => {
     expect(classify(instance(), obs(other), END + 5_000, GRACE_MS_LOCAL)).toEqual({ kind: 'ended', autoplayStarted: true });
   });

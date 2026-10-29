@@ -329,6 +329,7 @@ export function createController({
   function fromSdk(sdkState: WebPlaybackState): Observation {
     const track = sdkState.track_window.current_track as (WebPlaybackState['track_window']['current_track'] & {
       album?: { uri?: string };
+      linked_from?: { uri?: string | null };
     }) | null;
     return {
       deviceId: sdkDeviceId,
@@ -337,6 +338,7 @@ export function createController({
       contextUri: sdkState.context?.uri ?? null,
       trackUri: track?.uri ?? null,
       trackAlbumUri: track?.album?.uri ?? null,
+      linkedFromUri: track?.linked_from?.uri ?? null,
       paused: sdkState.paused,
       positionMs: sdkState.position,
       at: now(),
@@ -344,7 +346,7 @@ export function createController({
   }
 
   function fromPoll(poll: SpotifyPlaybackState): Observation {
-    const item = poll.item as { uri?: string; album?: { uri?: string } } | null;
+    const item = poll.item as { uri?: string; album?: { uri?: string }; linked_from?: { uri?: string } } | null;
     const deviceId = poll.device?.id ?? null;
     return {
       deviceId,
@@ -353,6 +355,7 @@ export function createController({
       contextUri: poll.context?.uri ?? null,
       trackUri: item?.uri ?? null,
       trackAlbumUri: item?.album?.uri ?? null,
+      linkedFromUri: item?.linked_from?.uri ?? null,
       paused: !poll.is_playing,
       positionMs: poll.progress_ms ?? 0,
       at: now(),
@@ -360,7 +363,10 @@ export function createController({
   }
 
   function onAlbum(album: Album, obs: Observation): boolean {
-    return obs.contextUri === album.uri && (obs.trackAlbumUri ?? album.uri) === album.uri;
+    return (
+      obs.contextUri === album.uri &&
+      ((obs.trackAlbumUri ?? album.uri) === album.uri || album.tracks.some((track) => track.uri === obs.linkedFromUri))
+    );
   }
 
   function observe(obs: Observation) {

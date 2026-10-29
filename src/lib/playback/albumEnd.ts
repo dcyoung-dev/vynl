@@ -32,6 +32,8 @@ export interface Observation {
   trackUri: string | null;
   /** The current track's album. `null` when Spotify didn't say. */
   trackAlbumUri: string | null;
+  /** The requested track when Spotify relinked it to another release's copy. */
+  linkedFromUri?: string | null;
   paused: boolean;
   positionMs: number;
   at: number;
@@ -65,8 +67,9 @@ export function classify(instance: AlbumInstance, obs: Observation, now: number,
   if (instance.advanced) return { kind: 'ignore' };
 
   const { album } = instance;
-  const trackIndex = album.tracks.findIndex((track) => track.uri === obs.trackUri);
-  const trackAlbumUri = obs.trackAlbumUri ?? (trackIndex >= 0 ? album.uri : null);
+  const trackIndex = album.tracks.findIndex((track) => track.uri === obs.trackUri || track.uri === obs.linkedFromUri);
+  const relinked = trackIndex >= 0 && album.tracks[trackIndex]?.uri === obs.linkedFromUri;
+  const trackAlbumUri = relinked ? album.uri : (obs.trackAlbumUri ?? (trackIndex >= 0 ? album.uri : null));
   const contextMatches = obs.contextUri === album.uri;
   const onAlbum = contextMatches && trackAlbumUri === album.uri;
   const albumVerdict: Verdict = { kind: 'album', trackIndex, positionMs: obs.positionMs };
