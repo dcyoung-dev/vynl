@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
-import type { Album, PlaybackStatus, Position } from '../../lib/store/queue';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import type { Album, PlaybackStatus } from '../../lib/store/queue';
 import Turntable, { type TurntableProps } from './Turntable';
 
 const album: Album = {
@@ -21,12 +21,6 @@ function setup(overrides: Partial<TurntableProps> = {}) {
     album,
     position: { trackIndex: 2, positionMs: 50_000 },
     status: 'Playing',
-    signedIn: true,
-    isFollower: false,
-    onMoveNeedle: vi.fn(),
-    onPlayPause: vi.fn(),
-    onNext: vi.fn(),
-    onPrevious: vi.fn(),
     ...overrides,
   };
   const utils = render(<Turntable {...props} />);
@@ -45,15 +39,6 @@ describe('Turntable', () => {
     expect(screen.getByText('Song 3', { selector: '[data-testid="now-playing"] *' })).toBeInTheDocument();
   });
 
-  it('moves the needle to track 8 from the track list, and the arm jumps when the position follows (AE2)', () => {
-    const { props, rerender } = setup();
-    fireEvent.click(screen.getByRole('button', { name: /Song 8/ }));
-    expect(props.onMoveNeedle).toHaveBeenCalledWith(7);
-    const moved: Position = { trackIndex: 7, positionMs: 0 };
-    rerender(<Turntable {...props} position={moved} />);
-    expect(screen.getByTestId('tonearm').style.getPropertyValue('--tonearm-progress')).toBe('0.7');
-  });
-
   it('stops the record and rests the arm when the queue runs out (AE3)', () => {
     const { props, rerender } = setup({ status: 'AlbumEnding' });
     rerender(<Turntable {...props} status={'Resting' satisfies PlaybackStatus} />);
@@ -61,15 +46,10 @@ describe('Turntable', () => {
     expect(screen.getByTestId('tonearm')).toHaveAttribute('data-resting');
   });
 
-  it('disables the controls and track list while signed out', () => {
-    setup({ signedIn: false, status: 'SignedOut' });
-    for (const button of screen.getAllByRole('button')) expect(button).toBeDisabled();
-  });
-
-  it('renders no controls in a follower tab (KTD8)', () => {
-    setup({ isFollower: true, status: 'Follower' });
+  it('leaves playback controls and the track list to the app shell', () => {
+    setup();
     expect(screen.queryAllByRole('button')).toHaveLength(0);
-    expect(screen.getByText('Song 8')).toBeInTheDocument();
+    expect(screen.queryByRole('list')).not.toBeInTheDocument();
   });
 
   it('shows an empty record with the arm at rest when nothing is on', () => {

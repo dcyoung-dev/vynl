@@ -46,7 +46,7 @@ export default function TrackListPanel({
         aria-expanded={open}
         aria-controls={drawerId}
         onClick={() => setOpen(true)}
-        className="rounded-full border border-muted-teal px-3 py-1.5 text-vanilla-custard hover:bg-night-bordeaux/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-honey-bronze md:hidden"
+        className="justify-self-start rounded-full border border-muted-teal px-3 py-1.5 text-vanilla-custard hover:bg-night-bordeaux/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-honey-bronze md:hidden"
       >
         Tracks
       </button>
@@ -71,9 +71,9 @@ export default function TrackListPanel({
             </svg>
           </button>
         </div>
-        <TrackList tracks={tracks} currentIndex={currentIndex} onMoveNeedle={onMoveNeedle} disabled={disabled} />
+        {open && <TrackList tracks={tracks} currentIndex={currentIndex} onMoveNeedle={onMoveNeedle} disabled={disabled} />}
       </aside>
-      <aside aria-label="Album tracks" className="hidden min-w-0 md:block">
+      <aside aria-label="Album tracks" className="hidden min-w-0 md:order-2 md:block">
         <h2 className="mb-3 font-display text-xl">Tracks</h2>
         <TrackList tracks={tracks} currentIndex={currentIndex} onMoveNeedle={onMoveNeedle} disabled={disabled} />
       </aside>

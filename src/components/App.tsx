@@ -21,6 +21,8 @@ import DevicePicker from './devices/DevicePicker';
 import Header from './Header';
 import QueuePanel from './queue/QueuePanel';
 import StatusBanner from './status/StatusBanner';
+import Controls from './turntable/Controls';
+import TrackListPanel from './turntable/TrackListPanel';
 import Turntable from './turntable/Turntable';
 
 export interface AppDeps {
@@ -266,7 +268,13 @@ function Shell({ locks, createController = createPlaybackController, authLost, o
           data-testid="app-body"
           className={`grid flex-1 grid-cols-1 gap-8 p-4 md:grid-cols-[minmax(0,1fr)_20rem] ${drawer.open ? 'md:pl-100' : ''}`}
         >
-          <main className="flex flex-col items-center gap-6">
+          <TrackListPanel
+            tracks={current?.tracks ?? []}
+            currentIndex={state.position.trackIndex}
+            onMoveNeedle={noControls ? undefined : (index) => void controller?.moveNeedle(index)}
+            disabled={status === 'Starting'}
+          />
+          <main className="order-2 flex min-w-0 flex-col items-center gap-6 md:order-1">
             <StatusBanner
               status={status}
               deviceName={snapshot.device?.name ?? null}
@@ -289,25 +297,34 @@ function Shell({ locks, createController = createPlaybackController, authLost, o
               album={current}
               position={state.position}
               status={status}
-              signedIn={status !== 'Starting'}
-              isFollower={noControls}
-              onMoveNeedle={(index) => void controller?.moveNeedle(index)}
-              onPlayPause={() => void controller?.playPause()}
-              onNext={() => void controller?.next()}
-              onPrevious={() => void controller?.previous()}
             />
+            {(!noControls || CAN_PICK_DEVICE.has(status)) && (
+              <div role="group" aria-label="Playback controls and devices" className="flex flex-wrap items-start justify-center gap-4">
+                {!noControls && (
+                  <Controls
+                    status={status}
+                    signedIn={status !== 'Starting'}
+                    onPlayPause={() => void controller?.playPause()}
+                    onNext={() => void controller?.next()}
+                    onPrevious={() => void controller?.previous()}
+                  />
+                )}
+                {CAN_PICK_DEVICE.has(status) && (
+                  <div className="w-32">
+                    <DevicePicker thisDeviceId={getDeviceId()} onTransfer={(id) => void controller?.transferTo(id)} />
+                  </div>
+                )}
+              </div>
+            )}
             {current && (
               <a href={spotifyAlbumUrl(current.id)} target="_blank" rel="noopener noreferrer" className={spotifyLink}>
                 Listen on Spotify
               </a>
             )}
-            {CAN_PICK_DEVICE.has(status) && (
-              <DevicePicker thisDeviceId={getDeviceId()} onTransfer={(id) => void controller?.transferTo(id)} />
-            )}
+            <div className="w-full max-w-4xl">
+              <QueuePanel isFollower={noControls} />
+            </div>
           </main>
-          <aside aria-label="Queue column">
-            <QueuePanel isFollower={noControls} />
-          </aside>
         </div>
         <BrowseDrawer
           open={drawer.open}

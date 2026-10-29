@@ -167,11 +167,16 @@ describe('signed in', () => {
     seed();
     const controller = await renderApp();
     controller.emit('Playing');
-    fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
+    const controls = screen.getByRole('group', { name: 'Playback controls and devices' });
+    fireEvent.click(within(controls).getByRole('button', { name: 'Pause' }));
     expect(controller.playPause).toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Next track' }));
+    fireEvent.click(within(controls).getByRole('button', { name: 'Next track' }));
     expect(controller.next).toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: /My Old Man/ }));
+    expect(within(controls).getByRole('button', { name: 'Devices' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Tracks' }));
+    fireEvent.click(
+      within(screen.getByRole('complementary', { name: 'Track list drawer' })).getByRole('button', { name: /My Old Man/ }),
+    );
     expect(controller.moveNeedle).toHaveBeenCalledWith(1);
   });
 
@@ -274,6 +279,12 @@ describe('signed in', () => {
     expect(screen.queryByRole('button', { name: 'Play' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Devices' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Play now' })).toBeNull();
+    const trackRail = screen.getByRole('complementary', { name: 'Album tracks' });
+    expect(within(trackRail).queryByRole('button')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Tracks' }));
+    const trackDrawer = screen.getByRole('complementary', { name: 'Track list drawer' });
+    expect(within(trackDrawer).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(trackDrawer).queryByRole('button', { name: /All I Want/ })).toBeNull();
     expect(controllers).toHaveLength(0);
   });
 
@@ -290,10 +301,20 @@ describe('signed in', () => {
     );
   });
 
-  it('uses a single column that becomes three below md', async () => {
+  it('places the queue below the turntable in the main column and the tracks in a desktop rail', async () => {
     seed();
     await renderApp();
-    expect(screen.getByTestId('app-body').className).toMatch(/md:grid-cols-/);
+    const body = screen.getByTestId('app-body');
+    const main = screen.getByRole('main');
+    const turntable = screen.getByRole('region', { name: 'Turntable' });
+    const queue = screen.getByRole('heading', { name: 'Up next' }).closest('section');
+    const trackRail = screen.getByRole('complementary', { name: 'Album tracks' });
+
+    expect(body.className).toMatch(/md:grid-cols-/);
+    expect(queue?.parentElement?.parentElement).toBe(main);
+    expect(turntable.compareDocumentPosition(queue!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(trackRail.parentElement).toBe(body);
+    expect(trackRail).toHaveClass('hidden', 'md:block');
   });
 });
 
