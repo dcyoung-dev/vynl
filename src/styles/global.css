@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@theme {
+  --color-dark-slate: oklch(44.9% 0.049 217);
+  --color-honey-bronze: oklch(74.9% 0.134 73.5);
+  --color-muted-teal: oklch(71.2% 0.043 130.5);
+  --color-vanilla-custard: oklch(95.8% 0.086 99.2);
+  --color-night-bordeaux: oklch(29.1% 0.104 24.9);
+}

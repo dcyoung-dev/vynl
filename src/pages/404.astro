@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import { appPath } from '../lib/url';
+---
+
+<Base title="Not found · Vynl">
+  <main class="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
+    <h1 class="text-4xl font-bold text-honey-bronze">This record isn't in the crate</h1>
+    <a class="rounded bg-honey-bronze px-4 py-2 font-semibold text-night-bordeaux" href={appPath()}>Back to Vynl</a>
+  </main>
+</Base>
