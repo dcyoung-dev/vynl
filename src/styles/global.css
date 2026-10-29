@@ -1,6 +1,19 @@
 @import "tailwindcss";
+@import "@fontsource-variable/nunito";
+
+/* Free for personal use only; see src/assets/fonts/molen-friend-demo-LICENSE.txt. */
+@font-face {
+  font-family: "Molen Friend";
+  src: url("../assets/fonts/molen-friend-demo.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 @theme {
+  --font-sans: "Nunito Variable", ui-rounded, ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Molen Friend", "Nunito Variable", ui-rounded, sans-serif;
+
   --color-dark-slate: oklch(44.9% 0.049 217);
   --color-honey-bronze: oklch(74.9% 0.134 73.5);
   --color-muted-teal: oklch(71.2% 0.043 130.5);
