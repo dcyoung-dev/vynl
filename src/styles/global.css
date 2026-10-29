@@ -107,9 +107,31 @@
   rotate: calc(
     var(--tonearm-outer) + var(--tonearm-progress, 0) * (var(--tonearm-inner) - var(--tonearm-outer))
   );
+  /* Dropping: swing over the record first, then lower the needle. */
   transition: rotate 700ms cubic-bezier(0.4, 0, 0.2, 1);
 
   :where(.tonearm[data-resting]) & {
     rotate: var(--tonearm-rest);
+    /* Lifting: raise the needle first, then swing off. */
+    transition-delay: 300ms;
+  }
+}
+
+/* The arm's height above the record: down on the grooves while playing, raised when resting (screen units). */
+@utility tonearm-lift {
+  translate: 0 -10px;
+  transition: translate 300ms cubic-bezier(0.4, 0, 0.2, 1) 650ms;
+
+  :where(.tonearm[data-resting]) & {
+    translate: 0 -24px;
+    transition-delay: 0ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tonearm-swing,
+  .tonearm-lift {
+    transition-duration: 1ms;
+    transition-delay: 0ms;
   }
 }

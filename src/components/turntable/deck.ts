@@ -18,7 +18,7 @@ export const RECORD = { cx: -30, cy: 0, r: 100, label: 34 } as const;
 export const ARM = {
   pivot: { x: 118, y: -78 },
   length: 150,
-  post: 14,
+  post: 16,
 } as const;
 
 export const pts = (list: [number, number][]) => list.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');

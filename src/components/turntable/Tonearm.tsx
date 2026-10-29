@@ -78,7 +78,7 @@ export default function Tonearm({ status, progress }: TonearmProps) {
         <ellipse cx={bx} cy={by} rx={13} ry={7.5} className="fill-neutral-700 stroke-neutral-500" strokeWidth={0.8} />
         <line x1={bx} y1={by} x2={bx} y2={by - ARM.post} className="stroke-neutral-500" strokeWidth={14} />
         <line x1={bx - 3} y1={by - 1} x2={bx - 3} y2={by - ARM.post} className="stroke-neutral-300/40" strokeWidth={2} />
-        <g transform={`translate(0 ${-ARM.post})`}>
+        <g className="tonearm-lift">
           <g transform={PLANE}>
             <g transform={`translate(${x} ${y})`}>
               <g className="tonearm-swing">
