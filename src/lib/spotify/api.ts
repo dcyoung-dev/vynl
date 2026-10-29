@@ -21,6 +21,7 @@ const SEARCH_LIMIT = 10;
 const SAVED_ALBUMS_LIMIT = 50;
 const ALBUM_TRACKS_LIMIT = 50;
 const DEFAULT_RETRY_AFTER_MS = 1000;
+const REQUEST_TIMEOUT_MS = 15_000;
 // A longer wait than this would leave the UI hanging, so it is reported as an error instead.
 const MAX_RETRY_AFTER_MS = 30_000;
 
@@ -102,6 +103,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (response.ok) {

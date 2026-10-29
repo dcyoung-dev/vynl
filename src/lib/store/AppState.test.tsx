@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { AppStateProvider, useAppState } from './AppState';
-import { loadState, saveState } from './persist';
+import { loadState, saveState, storageKey } from './persist';
 import type { Album } from './queue';
 
 function album(id: string): Album {
@@ -78,5 +78,21 @@ describe('AppStateProvider', () => {
 
     expect(screen.getByText('current: Album bob')).toBeInTheDocument();
     expect(loadState('alice').current?.id).toBe('alice');
+  });
+
+  it('adopts a newer queue saved by another tab', () => {
+    render(
+      <AppStateProvider accountId="alice">
+        <Probe />
+      </AppStateProvider>,
+    );
+    expect(screen.getByText('current: none')).toBeInTheDocument();
+
+    saveState('alice', { queue: [], current: album('fresh'), position: { trackIndex: 0, positionMs: 0 } });
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: storageKey('alice') }));
+    });
+
+    expect(screen.getByText('current: Album fresh')).toBeInTheDocument();
   });
 });

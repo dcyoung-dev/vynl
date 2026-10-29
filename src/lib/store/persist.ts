@@ -15,12 +15,12 @@ function emptyState(): SavedState {
 
 /** KTD9: corrupt JSON or a different schema version loads as an empty state. */
 export function loadState(accountId: string): SavedState {
-  const raw = localStorage.getItem(storageKey(accountId));
-  if (raw === null) return emptyState();
   try {
+    const raw = localStorage.getItem(storageKey(accountId));
+    if (raw === null) return emptyState();
     const data = JSON.parse(raw);
     if (data?.version !== VERSION || !Array.isArray(data.queue)) return emptyState();
-    return { queue: data.queue, current: data.current ?? null, position: data.position };
+    return { queue: data.queue, current: data.current ?? null, position: data.position ?? emptyState().position };
   } catch {
     return emptyState();
   }
@@ -28,7 +28,11 @@ export function loadState(accountId: string): SavedState {
 
 export function saveState(accountId: string, state: SavedState): void {
   const { queue, current, position } = state;
-  localStorage.setItem(storageKey(accountId), JSON.stringify({ version: VERSION, queue, current, position }));
+  try {
+    localStorage.setItem(storageKey(accountId), JSON.stringify({ version: VERSION, queue, current, position }));
+  } catch {
+    // Quota or blocked storage: the queue keeps working in memory for this session.
+  }
 }
 
 /** Saves the latest state shortly after it changes, and straight away when the page is hidden. */

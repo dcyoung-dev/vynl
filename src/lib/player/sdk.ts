@@ -152,8 +152,8 @@ function createPlayer(SpotifyPlayerClass: NonNullable<Window['Spotify']>['Player
       () => {
         if (current()) connect();
       },
-      () => {
-        if (current()) fail('AuthLost');
+      (error: unknown) => {
+        if (current() && error instanceof AuthLostError) fail('AuthLost');
       },
     );
   });

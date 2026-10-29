@@ -51,7 +51,8 @@ export type QueueAction =
   | { type: 'moveDown'; index: number }
   | { type: 'advance' }
   | { type: 'setPosition'; position: Position }
-  | { type: 'setStatus'; status: PlaybackStatus };
+  | { type: 'setStatus'; status: PlaybackStatus }
+  | { type: 'hydrate'; saved: Pick<QueueState, 'queue' | 'current' | 'position'> };
 
 const START: Position = { trackIndex: 0, positionMs: 0 };
 
@@ -68,6 +69,8 @@ function swap(queue: Album[], i: number, j: number): Album[] {
 
 export function queueReducer(state: QueueState, action: QueueAction): QueueState {
   switch (action.type) {
+    case 'hydrate':
+      return { ...state, ...action.saved };
     case 'add':
       return { ...state, queue: [...state.queue, action.album] };
     case 'playNow':

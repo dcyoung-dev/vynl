@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useReducer, useRef, type Dispatch, type ReactNode } from 'react';
-import { createPersister, loadState } from './persist';
+import { createPersister, loadState, storageKey } from './persist';
 import { initialQueueState, queueReducer, type QueueAction, type QueueState } from './queue';
 
 interface AppStateValue {
@@ -35,6 +35,15 @@ function AccountState({ accountId, children }: Props) {
     const created = createPersister(accountId);
     persister.current = created;
     return () => created.dispose();
+  }, [accountId]);
+
+  // Another tab saved a newer queue: adopt it so a follower promoted to leader never resumes stale state.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === storageKey(accountId)) dispatch({ type: 'hydrate', saved: loadState(accountId) });
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, [accountId]);
 
   useEffect(() => {

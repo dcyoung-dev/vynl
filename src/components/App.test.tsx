@@ -49,6 +49,7 @@ function fakeController(store: { dispatch(action: QueueAction): void }): FakeCon
   const resolved = () => Promise.resolve();
   return {
     start: vi.fn(),
+    activate: vi.fn(),
     playAlbum: vi.fn(resolved),
     moveNeedle: vi.fn(resolved),
     playPause: vi.fn(resolved),
@@ -186,6 +187,7 @@ describe('signed in', () => {
     controller.emit('Resting');
     fireEvent.click(await screen.findByRole('button', { name: 'Play now' }));
     await waitFor(() => expect(controller.playAlbum).toHaveBeenCalledWith(blue));
+    expect(controller.activate).toHaveBeenCalled();
   });
 
   it('invites browsing when nothing is on the turntable (F1)', async () => {

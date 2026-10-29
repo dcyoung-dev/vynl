@@ -41,6 +41,7 @@ export default function AlbumCard({ album, isFollower, onPlayNow }: AlbumCardPro
   const [error, setError] = useState<unknown>(null);
 
   async function choose(action: 'play' | 'add') {
+    if (action === 'play') playNow.activate?.();
     setPending(action);
     setError(null);
     try {

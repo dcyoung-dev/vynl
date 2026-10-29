@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { AuthLostError, isSignedIn, signOut, startSignIn } from '../lib/auth/session';
 import {
   createController as createPlaybackController,
@@ -238,8 +238,12 @@ function Shell({ locks, createController = createPlaybackController, authLost, o
   const noControls = NO_CONTROLS.has(status);
   const { current } = state;
 
-  const playNow = useCallback(
-    (album: Parameters<PlaybackController['playAlbum']>[0]) => controller?.playAlbum(album),
+  const playNow = useMemo(
+    () =>
+      Object.assign(
+        (album: Parameters<PlaybackController['playAlbum']>[0]) => controller?.playAlbum(album),
+        { activate: () => controller?.activate() },
+      ),
     [controller],
   );
 

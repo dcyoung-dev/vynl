@@ -2,7 +2,10 @@ import { createContext, useContext } from 'react';
 import { useAppState } from '../../lib/store/AppState';
 import type { Album } from '../../lib/store/queue';
 
-type PlayNow = (album: Album) => void | Promise<void>;
+type PlayNow = ((album: Album) => void | Promise<void>) & {
+  /** Unlocks audio; AlbumCard calls it in the click turn, before it fetches the album. */
+  activate?: () => void;
+};
 
 const PlayNowContext = createContext<PlayNow | null>(null);
 

@@ -73,6 +73,8 @@ export interface ControllerOptions {
 export interface PlaybackController {
   /** Loads the SDK, then reads `GET /me/player` once to pick the starting state (KTD17). */
   start(): void;
+  /** Unlocks audio in the tab; call synchronously from a click before any awaited work. */
+  activate(): void;
   /** Plays `album` from the start, dropping the current one (KTD14). */
   playAlbum(album: Album): Promise<void>;
   /** Drops the needle at the start of `trackIndex` of the current album. */
@@ -544,6 +546,8 @@ export function createController({
           // A failure signal reports why.
         });
     },
+
+    activate,
 
     playAlbum(album) {
       activate();

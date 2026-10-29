@@ -97,4 +97,21 @@ describe('createPersister', () => {
     expect(loadState('alice')).toEqual(saved);
     persister.dispose();
   });
+
+  it('keeps working when storage rejects a write', () => {
+    const persister = createPersister('alice');
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('full', 'QuotaExceededError');
+    });
+
+    persister.schedule(saved);
+    expect(() => persister.dispose()).not.toThrow();
+    spy.mockRestore();
+  });
+
+  it('fills in a missing position from an older record', () => {
+    localStorage.setItem(storageKey('alice'), JSON.stringify({ version: 1, queue: [], current: null }));
+
+    expect(loadState('alice').position).toEqual({ trackIndex: 0, positionMs: 0 });
+  });
 });
