@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { getAlbum, type AlbumPage, type AlbumSummary } from '../../lib/spotify/api';
 import { QuotaExceededError } from '../../lib/spotify/errors';
 import { useAppState } from '../../lib/store/AppState';
+import { usePlayNow } from './PlayNow';
 
 export function spotifyAlbumUrl(id: string): string {
   return `https://open.spotify.com/album/${encodeURIComponent(id)}`;
@@ -35,6 +36,7 @@ type Pending = 'play' | 'add' | null;
  */
 export default function AlbumCard({ album, isFollower, onPlayNow }: AlbumCardProps) {
   const { dispatch } = useAppState();
+  const playNow = usePlayNow();
   const [pending, setPending] = useState<Pending>(null);
   const [error, setError] = useState<unknown>(null);
 
@@ -44,7 +46,7 @@ export default function AlbumCard({ album, isFollower, onPlayNow }: AlbumCardPro
     try {
       const full = await getAlbum(album.id);
       if (action === 'play') {
-        dispatch({ type: 'playNow', album: full });
+        void playNow(full);
         onPlayNow?.();
       } else {
         dispatch({ type: 'add', album: full });

@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+import ForgetButton from '../components/privacy/ForgetButton';
+import { appPath } from '../lib/url';
+---
+
+<Base title="Privacy · Vynl">
+  <main class="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+    <h1 class="font-display text-5xl text-honey-bronze">Privacy</h1>
+    <p>
+      Vynl has no server and no database. Everything it remembers stays in this browser's localStorage, and nothing is
+      sent anywhere except to Spotify.
+    </p>
+    <section class="flex flex-col gap-2">
+      <h2 class="font-display text-2xl">What Vynl stores</h2>
+      <ul class="list-disc pl-6">
+        <li><code>vynl:auth</code>: your Spotify sign-in tokens, used to talk to Spotify for you.</li>
+        <li>
+          <code>vynl:v1:&lt;your Spotify account id&gt;</code>: your queue, the current album and your place in it.
+        </li>
+        <li><code>vynl:last-account</code>: which account's queue to show when the page opens.</li>
+      </ul>
+    </section>
+    <section class="flex flex-col gap-2">
+      <h2 class="font-display text-2xl">Deleting it</h2>
+      <p>
+        <strong>Sign out</strong> in the header removes your sign-in and keeps your queue for next time.
+        <strong>Forget me on this browser</strong> also removes your queue and the last-account note, and stops the player.
+        You can use it here too, or clear this site's data in your browser settings.
+      </p>
+      <ForgetButton client:only="react" />
+      <p>
+        You can also remove Vynl's access to your Spotify account at
+        <a class="underline hover:text-honey-bronze" href="https://www.spotify.com/account/apps/" rel="noopener noreferrer">spotify.com/account/apps</a>.
+      </p>
+    </section>
+    <p><a class="underline hover:text-honey-bronze" href={appPath()}>Back to Vynl</a></p>
+  </main>
+</Base>

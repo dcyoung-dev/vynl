@@ -5,6 +5,7 @@ import { QuotaExceededError } from '../../lib/spotify/errors';
 import { AppStateProvider, useAppState } from '../../lib/store/AppState';
 import type { Album } from '../../lib/store/queue';
 import AlbumCard from './AlbumCard';
+import { PlayNowProvider } from './PlayNow';
 
 vi.mock('../../lib/spotify/api', () => ({
   getAlbum: vi.fn(),
@@ -87,6 +88,23 @@ describe('AlbumCard', () => {
     expect(getAlbum).toHaveBeenCalledWith('abc');
     expect(onPlayNow).toHaveBeenCalledTimes(1);
     expect(screen.getByText('queue: empty')).toBeInTheDocument();
+  });
+
+  it('hands the album to a PlayNowProvider handler instead of dispatching playNow', async () => {
+    vi.mocked(getAlbum).mockResolvedValue(full);
+    const playAlbum = vi.fn();
+    render(
+      <AppStateProvider accountId="test">
+        <PlayNowProvider value={playAlbum}>
+          <AlbumCard album={summary} isFollower={false} />
+        </PlayNowProvider>
+        <Probe />
+      </AppStateProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Play now' }));
+    await vi.waitFor(() => expect(playAlbum).toHaveBeenCalledWith(full));
+    expect(screen.getByText('current: none')).toBeInTheDocument();
   });
 
   it('Add to queue fetches the album and dispatches add with it', async () => {
