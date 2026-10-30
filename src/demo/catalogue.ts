@@ -1,3 +1,4 @@
+import { playlists } from '../lib/playlists/catalog';
 import type { SpotifyAlbum, SpotifyArtist, SpotifyDevice, SpotifyTrack, SpotifyUser } from '../lib/spotify/types';
 
 // Hues taken from the palette in src/styles/global.css.
@@ -54,7 +55,7 @@ function buildAlbum(spec: AlbumSpec, seed: number): SpotifyAlbum {
       artists: spec.artists,
     };
   });
-  const art = coverArt(seed, spec.name.slice(0, 18));
+  const art = coverArt(seed, spec.name.slice(0, 18).replace(/&/g, '+').replace(/</g, ''));
   return {
     id: spec.id,
     uri: `spotify:album:${spec.id}`,
@@ -185,6 +186,31 @@ export const DEMO_SEARCH_ALBUMS: SpotifyAlbum[] = SEARCH_SPECS.map((spec, index)
 
 export function allDemoAlbums(): SpotifyAlbum[] {
   return [...DEMO_ALBUMS, ...DEMO_SEARCH_ALBUMS];
+}
+
+let playlistAlbums: SpotifyAlbum[] | undefined;
+
+/**
+ * Fake albums for every catalogue playlist entry, built from its display snapshot so the demo follows catalogue edits.
+ * They resolve by id and uri but stay out of saved albums and search.
+ */
+export function playlistDemoAlbums(): SpotifyAlbum[] {
+  playlistAlbums ??= playlists
+    .flatMap((playlist) => playlist.albums)
+    .filter((summary, index, all) => all.findIndex((other) => other.id === summary.id) === index)
+    .map((summary, index) =>
+      buildAlbum(
+        {
+          id: summary.id,
+          name: summary.name,
+          artists: summary.artists.map((name) => artist(`playlist-${summary.id}-${name}`, name)),
+          tracks: Array.from({ length: summary.totalTracks }, (_, track) => `Track ${track + 1}`),
+          year: 2020,
+        },
+        index + DEMO_ALBUMS.length + DEMO_SEARCH_ALBUMS.length,
+      ),
+    );
+  return playlistAlbums;
 }
 
 export const DEMO_USER: SpotifyUser = {

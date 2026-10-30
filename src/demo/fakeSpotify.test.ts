@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isSignedIn } from '../lib/auth/session';
 import * as api from '../lib/spotify/api';
 import * as sdk from '../lib/player/sdk';
+import { playlists } from '../lib/playlists/catalog';
+import { loadPlaylistAlbums } from '../lib/playlists/load';
 import { DEMO_ALBUMS, DEMO_TAB_DEVICE_ID, DEMO_USER } from './catalogue';
 import { install, uninstall } from './fakeSpotify';
 
@@ -54,6 +56,23 @@ describe('fake Spotify', () => {
   it('returns every track of the 32-track album', async () => {
     const album = await api.getAlbum(BIG_ALBUM.id);
     expect(album.tracks).toHaveLength(32);
+  });
+
+  it('resolves every album of a catalogue playlist in order, with the snapshot track counts', async () => {
+    const [playlist] = playlists;
+    const albums = await loadPlaylistAlbums(playlist);
+    expect(albums.map((album) => album.id)).toEqual(playlist.albums.map((album) => album.id));
+    expect(albums.map((album) => album.tracks.length)).toEqual(playlist.albums.map((album) => album.totalTracks));
+    expect(albums[0].name).toBe(playlist.albums[0].name);
+    expect(albums[0].imageUrl).toMatch(/^data:image\/svg\+xml/);
+  });
+
+  it('plays a catalogue playlist album on the demo device', async () => {
+    const [first] = playlists[0].albums;
+    await api.play({ deviceId: DEMO_TAB_DEVICE_ID, contextUri: first.uri });
+    const state = await api.getPlaybackState();
+    expect(state).toMatchObject({ is_playing: true, device: { id: DEMO_TAB_DEVICE_ID, is_active: true } });
+    expect(state?.context?.uri).toBe(first.uri);
   });
 
   it('plays an album at a track, advancing progress with the clock', async () => {

@@ -8,7 +8,7 @@ import type {
 } from '../lib/spotify/types';
 import type { SpotifyPlayer, SpotifyPlayerEvents, SpotifyPlayerOptions, WebPlaybackState } from '../lib/player/sdk';
 import { AUTH_STORAGE_KEY } from '../lib/auth/session';
-import { DEMO_ALBUMS, DEMO_DEVICES, DEMO_SEARCH_ALBUMS, DEMO_TAB_DEVICE_ID, DEMO_USER, allDemoAlbums } from './catalogue';
+import { DEMO_ALBUMS, DEMO_DEVICES, DEMO_SEARCH_ALBUMS, DEMO_TAB_DEVICE_ID, DEMO_USER, allDemoAlbums, playlistDemoAlbums } from './catalogue';
 
 const API_HOST = 'api.spotify.com';
 const ACCOUNTS_HOST = 'accounts.spotify.com';
@@ -181,7 +181,7 @@ function paging<T>(items: T[], offset: number, limit: number, href: string): Spo
 }
 
 function findAlbum(id: string): SpotifyAlbum | undefined {
-  return allDemoAlbums().find((album) => album.id === id);
+  return [...allDemoAlbums(), ...playlistDemoAlbums()].find((album) => album.id === id);
 }
 
 function json(body: unknown, status = 200): Response {
@@ -284,7 +284,7 @@ async function routeApi(url: URL, method: string, init?: RequestInit): Promise<R
     const body = await readBody(init);
     const contextUri = typeof body.context_uri === 'string' ? body.context_uri : null;
     if (contextUri) {
-      const album = allDemoAlbums().find((a) => a.uri === contextUri);
+      const album = [...allDemoAlbums(), ...playlistDemoAlbums()].find((a) => a.uri === contextUri);
       if (!album) return json({ error: { status: 404, message: 'Context not found' } }, 404);
       const offsetUri = (body.offset as { uri?: string } | undefined)?.uri;
       const index = Math.max(0, album.tracks.items.findIndex((t) => t.uri === offsetUri));
