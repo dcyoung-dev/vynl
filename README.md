@@ -40,10 +40,15 @@ bun run dev
 | Command | Action |
 | :-- | :-- |
 | `bun run dev` | Start the dev server at `http://127.0.0.1:4321/vynl/` |
+| `bun run dev:demo` | Start a signed-in demo with fake albums, queue, devices and playback at `http://127.0.0.1:4322/vynl/`, no Spotify account needed |
 | `bun run test` | Run the Vitest suite (never `bun test`, which skips Astro's Vite pipeline) |
 | `bun run check` | Type-check and run Astro diagnostics |
 | `bun run build` | Build the static site to `./dist/` |
 | `bun run preview` | Serve the built site, with the content security policy active |
+
+## Demo mode
+
+`bun run dev:demo` runs the real app against an in-browser fake of Spotify, so you can try the player and check layouts without an account. It uses its own origin (port 4322), so its sign-in and saved queue live in that origin's storage and never touch a real session on port 4321. The fake is dev-only: it is gated on `import.meta.env.DEV`, so production builds never include it.
 
 ## Palette
 
