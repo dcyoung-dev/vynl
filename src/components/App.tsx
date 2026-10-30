@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { AuthLostError, isSignedIn, signOut, startSignIn } from '../lib/auth/session';
 import {
   createController as createPlaybackController,
@@ -9,6 +9,8 @@ import {
 import { disconnect, getDeviceId } from '../lib/player/sdk';
 import { getMe } from '../lib/spotify/api';
 import { NotAllowlistedError } from '../lib/spotify/errors';
+import { findPlaylist, type Playlist } from '../lib/playlists/catalog';
+import { appPath, PLAYLIST_PARAM } from '../lib/url';
 import { AppStateProvider, useAppState } from '../lib/store/AppState';
 import { forgetAccount, getLastAccount, setLastAccount } from '../lib/store/account';
 import { claimLeadership, type LeaderRole } from '../lib/store/leader';
@@ -18,6 +20,7 @@ import BrowseDrawer, { useBrowseDrawer } from './browse/BrowseDrawer';
 import { spotifyAlbumUrl } from '../lib/spotify/links';
 import { primaryButton, spotifyLink } from './browse/AlbumCard';
 import { PlayNowProvider } from './browse/PlayNow';
+import PlaylistStart from './playlists/PlaylistStart';
 import DevicePicker from './devices/DevicePicker';
 import Header from './Header';
 import QueuePanel from './queue/QueuePanel';
@@ -77,9 +80,18 @@ function useRole(locks: AppDeps['locks']): LeaderRole | null {
   return role;
 }
 
+/** A known playlist named in the address. It only selects: nothing starts until the listener asks. */
+function readSelectedPlaylist(): Playlist | null {
+  if (typeof window === 'undefined') return null;
+  return findPlaylist(new URLSearchParams(window.location.search).get(PLAYLIST_PARAM)) ?? null;
+}
+
 export default function App({ deps = {} }: { deps?: AppDeps }) {
   const [signedIn, setSignedIn] = useState(isSignedIn);
   const [accountId, setAccountId] = useState<string | null>(getLastAccount);
+  // Unlike the remembered account, this one has been confirmed by Spotify in this page load.
+  const [verifiedAccountId, setVerifiedAccountId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Playlist | null>(readSelectedPlaylist);
   const [problem, setProblem] = useState<MeProblem | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [forgetting, setForgetting] = useState<string | null | undefined>(undefined);
@@ -92,10 +104,12 @@ export default function App({ deps = {} }: { deps?: AppDeps }) {
         if (!current) return;
         setLastAccount(me.id);
         setAccountId(me.id);
+        setVerifiedAccountId(me.id);
         setProblem(null);
       },
       (error: unknown) => {
         if (!current) return;
+        setVerifiedAccountId(null);
         if (error instanceof NotAllowlistedError) setProblem('NotAllowlisted');
         else if (error instanceof AuthLostError) setProblem('AuthLost');
         else setProblem('Failed');
@@ -103,8 +117,16 @@ export default function App({ deps = {} }: { deps?: AppDeps }) {
     );
     return () => {
       current = false;
+      setVerifiedAccountId(null);
     };
   }, [signedIn, attempt]);
+
+  const signIn = () => void startSignIn({ playlist: selected?.slug });
+
+  function onSelectionStarted() {
+    window.history.replaceState(null, '', appPath());
+    setSelected(null);
+  }
 
   // Forgetting waits for the account's state to unmount, so its saver can't write the key back.
   useEffect(() => {
@@ -126,7 +148,7 @@ export default function App({ deps = {} }: { deps?: AppDeps }) {
   }
 
   const header = (
-    <Header signedIn={signedIn} onSignIn={() => void startSignIn()} onSignOut={onSignOut} onForget={onForget} />
+    <Header signedIn={signedIn} onSignIn={signIn} onSignOut={onSignOut} onForget={onForget} />
   );
 
   if (!signedIn) {
@@ -134,6 +156,13 @@ export default function App({ deps = {} }: { deps?: AppDeps }) {
       <div className="flex min-h-screen flex-col">
         {header}
         <main className="mx-auto flex max-w-xl flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
+          {selected && (
+            <section aria-label="Selected playlist" className="flex flex-col gap-1 rounded-sm border border-muted-teal p-4">
+              <h2 className="font-display text-2xl text-honey-bronze">{selected.title}</h2>
+              <p>{selected.description}</p>
+              <p className="text-sm">Sign in with a Spotify Premium account to play it. Nothing starts until you ask.</p>
+            </section>
+          )}
           <h2 className="font-display text-5xl text-honey-bronze">Spotify albums, played like records</h2>
           <p>
             Sign in with Spotify Premium, open your albums or search the catalogue, pick a record and play it now.
@@ -158,7 +187,7 @@ export default function App({ deps = {} }: { deps?: AppDeps }) {
             notice={null}
             onPlayHere={() => {}}
             onBringItBack={() => {}}
-            onSignInAgain={() => void startSignIn()}
+            onSignInAgain={signIn}
             onDismissNotice={() => {}}
           />
           {problem === 'Failed' && (
@@ -180,9 +209,13 @@ export default function App({ deps = {} }: { deps?: AppDeps }) {
         locks={deps.locks}
         createController={deps.createController}
         authLost={problem === 'AuthLost'}
-        onSignIn={() => void startSignIn()}
+        onSignIn={signIn}
         onSignOut={onSignOut}
         onForget={onForget}
+        accountId={accountId}
+        verifiedAccountId={verifiedAccountId}
+        selected={selected}
+        onSelectionStarted={onSelectionStarted}
       />
     </AppStateProvider>
   );
@@ -195,10 +228,25 @@ interface ShellProps {
   onSignIn: () => void;
   onSignOut: () => void;
   onForget: () => void;
+  accountId: string;
+  verifiedAccountId: string | null;
+  selected: Playlist | null;
+  onSelectionStarted: () => void;
 }
 
 /** The chosen layout (R11): header, drawer, turntable in the centre, queue on the right; one column on small screens. */
-function Shell({ locks, createController = createPlaybackController, authLost, onSignIn, onSignOut, onForget }: ShellProps) {
+function Shell({
+  locks,
+  createController = createPlaybackController,
+  authLost,
+  onSignIn,
+  onSignOut,
+  onForget,
+  accountId,
+  verifiedAccountId,
+  selected,
+  onSelectionStarted,
+}: ShellProps) {
   const { state, dispatch } = useAppState();
   const role = useRole(locks);
   const drawer = useBrowseDrawer();
@@ -250,6 +298,11 @@ function Shell({ locks, createController = createPlaybackController, authLost, o
     [controller],
   );
 
+  const getSession = useCallback(
+    () => ({ hasCurrent: stateRef.current.current !== null, queued: stateRef.current.queue.length }),
+    [],
+  );
+
   function playHere() {
     const tab = getDeviceId();
     void (tab ? controller?.transferTo(tab) : controller?.bringItBack());
@@ -285,6 +338,17 @@ function Shell({ locks, createController = createPlaybackController, authLost, o
               onSignInAgain={onSignIn}
               onDismissNotice={() => controller?.dismissNotice()}
             />
+            {selected && (
+              <PlaylistStart
+                playlist={selected}
+                accountId={accountId}
+                verifiedAccountId={verifiedAccountId}
+                controller={controller}
+                canStart={!noControls && status !== 'Starting'}
+                getSession={getSession}
+                onStarted={onSelectionStarted}
+              />
+            )}
             {!current && status === 'Resting' && (
               <p className="text-center">
                 Nothing on the turntable yet.{' '}
