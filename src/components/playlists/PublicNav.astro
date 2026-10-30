@@ -1,0 +1,16 @@
+---
+import { appPath, playlistsPath } from '../../lib/url';
+
+const link =
+  'rounded-full px-3 py-1.5 text-sm text-vanilla-custard underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-honey-bronze';
+---
+
+<header class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-muted-teal px-4 py-3">
+  <a href={appPath()} class="font-display text-3xl text-honey-bronze focus-visible:outline-2 focus-visible:outline-honey-bronze">Vynl</a>
+  <nav aria-label="Site" class="flex flex-wrap items-center gap-1">
+    <a href={playlistsPath()} class={link}>Playlists</a>
+    <a href={appPath('privacy')} class={link}>Privacy</a>
+    <a href={appPath()} class={link}>Open player</a>
+    <img src={`${appPath('spotify')}Spotify_Full_Logo.svg`} alt="Spotify" width="90" class="ml-2 h-auto" />
+  </nav>
+</header>

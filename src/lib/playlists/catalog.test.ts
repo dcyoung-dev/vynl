@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { findPlaylist, playlists, type Playlist } from './catalog';
-import { queueReducer, initialQueueState, type Album } from '../store/queue';
+import { queueReducer, initialQueueState, type Album, type QueueState } from '../store/queue';
 
 const albumRotationIds = [
   '7jtE0xbYPrmEefrEqKWFha',
@@ -60,7 +60,7 @@ describe('playlist catalogue', () => {
   it('is not changed by local queue edits derived from it', () => {
     const before = JSON.stringify(playlists);
     const [first, ...rest] = playlists[0].albums.map<Album>((a) => ({ ...a, tracks: [] }));
-    let state = { ...initialQueueState(), current: first, queue: rest };
+    let state: QueueState = { ...initialQueueState(), current: first, queue: rest };
     state = queueReducer(state, { type: 'remove', index: 0 });
     state = queueReducer(state, { type: 'moveDown', index: 0 });
     state = queueReducer(state, { type: 'advance' });
