@@ -46,16 +46,24 @@ export default function TrackListPanel({
         aria-expanded={open}
         aria-controls={drawerId}
         onClick={() => setOpen(true)}
-        className="self-start justify-self-start rounded-full border border-muted-teal px-3 py-1.5 text-vanilla-custard hover:bg-night-bordeaux/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-honey-bronze lg:hidden"
+        className="self-start justify-self-start rounded-full bg-muted-teal px-3 py-1.5 text-sm font-semibold text-night-bordeaux focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-honey-bronze lg:hidden"
       >
         Tracks
       </button>
+      {open && (
+        <div
+          data-testid="tracks-backdrop"
+          aria-hidden="true"
+          onClick={close}
+          className="fixed inset-0 z-25 bg-neutral-950/60 lg:hidden"
+        />
+      )}
       <aside
         id={drawerId}
         aria-label="Track list drawer"
         hidden={!open}
         onKeyDown={onKeyDown}
-        className="fixed inset-y-0 right-0 z-30 flex w-full max-w-sm flex-col gap-4 overflow-y-auto border-l border-muted-teal bg-dark-slate p-4 text-vanilla-custard shadow-2xl shadow-neutral-950/60 transition-[translate] duration-300 starting:translate-x-full motion-reduce:transition-none lg:hidden"
+        className="fixed inset-y-0 right-0 z-30 flex w-full flex-col gap-4 overflow-y-auto border-l border-muted-teal bg-dark-slate p-4 text-vanilla-custard shadow-2xl shadow-neutral-950/60 transition-[translate] duration-300 starting:translate-x-full motion-reduce:transition-none md:w-96 lg:hidden"
       >
         <div className="flex items-center justify-between gap-2">
           <h2 className="font-display text-xl">Tracks</h2>

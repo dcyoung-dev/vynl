@@ -40,6 +40,22 @@ describe('TrackListPanel', () => {
     expect(opener).toHaveFocus();
   });
 
+  it('shows a backdrop only while the drawer is open, and clicking it closes and refocuses the opener', () => {
+    render(<TrackListPanel tracks={tracks} currentIndex={0} />);
+    expect(screen.queryByTestId('tracks-backdrop')).not.toBeInTheDocument();
+
+    const opener = screen.getByRole('button', { name: 'Tracks' });
+    fireEvent.click(opener);
+    const backdrop = screen.getByTestId('tracks-backdrop');
+    expect(backdrop).toHaveAttribute('aria-hidden', 'true');
+    expect(backdrop).toHaveClass('lg:hidden');
+
+    fireEvent.click(backdrop);
+    expect(screen.queryByRole('complementary', { name: 'Track list drawer' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('tracks-backdrop')).not.toBeInTheDocument();
+    expect(opener).toHaveFocus();
+  });
+
   it('moves the needle when a track is selected without changing drawer state', () => {
     const onMoveNeedle = vi.fn();
     render(<TrackListPanel tracks={tracks} currentIndex={0} onMoveNeedle={onMoveNeedle} />);
