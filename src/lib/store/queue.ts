@@ -46,6 +46,7 @@ export interface QueueState {
 export type QueueAction =
   | { type: 'add'; album: Album }
   | { type: 'playNow'; album: Album }
+  | { type: 'replaceSelection'; albums: Album[] }
   | { type: 'remove'; index: number }
   | { type: 'moveUp'; index: number }
   | { type: 'moveDown'; index: number }
@@ -76,6 +77,11 @@ export function queueReducer(state: QueueState, action: QueueAction): QueueState
     case 'playNow':
       // KTD14: the interrupted album is dropped, never pushed back into the queue.
       return { ...state, current: action.album, position: START };
+    case 'replaceSelection': {
+      // The whole selection replaces the current album and the queue at once, starting from zero.
+      const [first, ...rest] = action.albums;
+      return first ? { ...state, current: first, queue: rest, position: START } : state;
+    }
     case 'remove':
       return { ...state, queue: state.queue.filter((_, i) => i !== action.index) };
     case 'moveUp':

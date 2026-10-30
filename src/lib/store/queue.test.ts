@@ -105,4 +105,27 @@ describe('queueReducer', () => {
 
     expect(next.status).toBe('Playing');
   });
+
+  it('replaceSelection makes the first album current, queues the rest in order and resets the position', () => {
+    const state = stateWith({
+      current: album('old'),
+      queue: [album('x'), album('y')],
+      position: { trackIndex: 4, positionMs: 32_647 },
+    });
+    const albums = [album('a'), album('b'), album('c')];
+
+    const next = queueReducer(state, { type: 'replaceSelection', albums });
+
+    expect(next.current).toEqual(albums[0]);
+    expect(ids(next)).toEqual(['b', 'c']);
+    expect(next.position).toEqual({ trackIndex: 0, positionMs: 0 });
+    expect(next.status).toBe(state.status);
+    expect(albums).toHaveLength(3);
+  });
+
+  it('replaceSelection with no albums changes nothing', () => {
+    const state = stateWith({ current: album('old'), queue: [album('x')] });
+
+    expect(queueReducer(state, { type: 'replaceSelection', albums: [] })).toBe(state);
+  });
 });

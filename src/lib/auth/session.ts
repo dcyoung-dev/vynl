@@ -1,3 +1,4 @@
+import { findPlaylist } from '../playlists/catalog';
 import { redirectUri } from '../url';
 import { buildAuthorizeUrl, createCodeChallenge, createCodeVerifier, randomString } from './pkce';
 
@@ -16,6 +17,13 @@ interface Tokens {
 interface PendingSignIn {
   state: string;
   verifier: string;
+  /** A known catalogue slug the listener had selected. Selection only; never a URL or an album payload. */
+  playlist?: string;
+}
+
+export interface SignInResult {
+  /** The known playlist slug to reselect after sign-in. Present only after a successful, state-validated exchange. */
+  playlist?: string;
 }
 
 interface StoredAuth extends Partial<Tokens> {
@@ -88,10 +96,11 @@ export function isSignedIn(): boolean {
   return readTokens() !== null;
 }
 
-export async function startSignIn(): Promise<void> {
+export async function startSignIn(options: { playlist?: string | null } = {}): Promise<void> {
   const verifier = createCodeVerifier();
   const state = randomString(32);
-  writeAuth({ pkce: { state, verifier } });
+  const playlist = findPlaylist(options.playlist)?.slug;
+  writeAuth({ pkce: { state, verifier, ...(playlist && { playlist }) } });
   const url = buildAuthorizeUrl({
     clientId: clientId(),
     redirectUri: redirectUri(),
@@ -102,9 +111,9 @@ export async function startSignIn(): Promise<void> {
 }
 
 // Keyed by code so StrictMode's double effect shares one exchange; codes are single-use.
-const exchanges = new Map<string, Promise<void>>();
+const exchanges = new Map<string, Promise<SignInResult>>();
 
-export function completeSignIn(url: URL): Promise<void> {
+export function completeSignIn(url: URL): Promise<SignInResult> {
   const code = url.searchParams.get('code');
   if (!code) {
     return Promise.reject(new SignInError(url.searchParams.get('error') ?? 'missing_code'));
@@ -117,7 +126,7 @@ export function completeSignIn(url: URL): Promise<void> {
   return exchange;
 }
 
-async function exchangeCode(code: string, state: string | null): Promise<void> {
+async function exchangeCode(code: string, state: string | null): Promise<SignInResult> {
   const pending = readAuth()?.pkce;
   if (!pending || pending.state !== state) {
     throw new SignInError('state_mismatch');
@@ -140,6 +149,8 @@ async function exchangeCode(code: string, state: string | null): Promise<void> {
     refreshToken: body.refresh_token,
     expiresAt: Date.now() + body.expires_in * 1000,
   });
+  const playlist = findPlaylist(pending.playlist)?.slug;
+  return playlist ? { playlist } : {};
 }
 
 let inFlightRefresh: Promise<string> | null = null;

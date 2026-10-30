@@ -6,7 +6,8 @@ import type { PlaybackController, PlaybackSnapshot } from '../lib/playback/contr
 import { getAlbum, getDevices, getMe, getSavedAlbums } from '../lib/spotify/api';
 import { NotAllowlistedError } from '../lib/spotify/errors';
 import type { SpotifyDevice } from '../lib/spotify/types';
-import { saveState } from '../lib/store/persist';
+import { findPlaylist } from '../lib/playlists/catalog';
+import { loadState, saveState } from '../lib/store/persist';
 import type { Album, PlaybackStatus, QueueAction } from '../lib/store/queue';
 import { createFakeLockManager } from '../test/fakes/locks';
 import App, { type AppDeps } from './App';
@@ -51,6 +52,10 @@ function fakeController(store: { dispatch(action: QueueAction): void }): FakeCon
     start: vi.fn(),
     activate: vi.fn(),
     playAlbum: vi.fn(resolved),
+    startSelection: vi.fn((albums: Album[]) => {
+      store.dispatch({ type: 'replaceSelection', albums });
+      return Promise.resolve(true);
+    }),
     moveNeedle: vi.fn(resolved),
     playPause: vi.fn(resolved),
     next: vi.fn(resolved),
@@ -93,6 +98,7 @@ beforeEach(() => {
   vi.mocked(getDevices).mockResolvedValue([]);
   vi.mocked(getSavedAlbums).mockResolvedValue({ items: [], total: 0, nextOffset: null });
   vi.mocked(getAlbum).mockReset();
+  window.history.replaceState(null, '', '/vynl/');
   controllers = [];
   registry = createFakeLockManager.registry();
   deps = {
@@ -354,5 +360,158 @@ describe('sign-out and forgetting', () => {
     expect(localStorage.getItem('vynl:v1:bob')).not.toBeNull();
     expect(disconnect).toHaveBeenCalled();
     expect(screen.getAllByRole('button', { name: 'Sign in with Spotify' }).length).toBeGreaterThan(0);
+  });
+});
+
+describe('a selected playlist', () => {
+  const playlist = findPlaylist('album-rotation')!;
+  const select = (query = '?playlist=album-rotation') => window.history.replaceState(null, '', `/vynl/${query}`);
+
+  beforeEach(() => {
+    vi.mocked(getAlbum).mockImplementation((id) =>
+      Promise.resolve({ ...blue, id, uri: `spotify:album:${id}`, name: `Album ${id}` }),
+    );
+  });
+
+  it('is carried into sign-in when signed out, and starts nothing', () => {
+    vi.mocked(isSignedIn).mockReturnValue(false);
+    select();
+    render(<App deps={deps} />);
+
+    expect(screen.getByRole('region', { name: 'Selected playlist' })).toHaveTextContent(playlist.title);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Sign in with Spotify' })[0]);
+    expect(startSignIn).toHaveBeenCalledWith({ playlist: 'album-rotation' });
+    expect(getAlbum).not.toHaveBeenCalled();
+  });
+
+  it('ignores an unknown slug', () => {
+    vi.mocked(isSignedIn).mockReturnValue(false);
+    select('?playlist=nope');
+    render(<App deps={deps} />);
+    expect(screen.queryByRole('region', { name: 'Selected playlist' })).toBeNull();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Sign in with Spotify' })[0]);
+    expect(startSignIn).toHaveBeenCalledWith({ playlist: undefined });
+  });
+
+  it('shows the panel once signed in but loads and starts nothing until asked', async () => {
+    seed();
+    select();
+    const controller = await renderApp();
+    controller.emit('Resting');
+
+    expect(await screen.findByRole('heading', { name: playlist.title })).toBeInTheDocument();
+    await act(async () => {});
+    expect(getAlbum).not.toHaveBeenCalled();
+    expect(controller.startSelection).not.toHaveBeenCalled();
+    expect(loadState('alice').current?.id).toBe('blue');
+  });
+
+  it('starts into an empty session: first album current, the rest queued, address cleaned', async () => {
+    seed('alice', null, []);
+    select();
+    const controller = await renderApp();
+    controller.emit('Resting');
+
+    const start = await screen.findByRole('button', { name: 'Start playlist' });
+    await waitFor(() => expect(start).toBeEnabled());
+    fireEvent.click(start);
+    await waitFor(() => expect(controller.startSelection).toHaveBeenCalledTimes(1));
+
+    await waitFor(() => expect(loadState('alice').current?.id).toBe(playlist.albums[0].id));
+    const saved = loadState('alice');
+    expect(saved.queue.map((a) => a.id)).toEqual(playlist.albums.slice(1).map((a) => a.id));
+    expect(saved.position).toEqual({ trackIndex: 0, positionMs: 0 });
+    expect(window.location.search).toBe('');
+    expect(screen.queryByRole('button', { name: 'Start playlist' })).toBeNull();
+  });
+
+  it('confirms before replacing a populated session, and cancel leaves it as it was', async () => {
+    seed();
+    select();
+    const controller = await renderApp();
+    controller.emit('Playing');
+    const start = await screen.findByRole('button', { name: 'Start playlist' });
+    await waitFor(() => expect(start).toBeEnabled());
+    fireEvent.click(start);
+
+    await screen.findByRole('alertdialog');
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(controller.startSelection).not.toHaveBeenCalled();
+    expect(loadState('alice').current?.id).toBe('blue');
+    expect(loadState('alice').queue.map((a) => a.id)).toEqual(['kind']);
+    expect(window.location.search).toBe('?playlist=album-rotation');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start playlist' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Replace and start' }));
+    await waitFor(() => expect(loadState('alice').current?.id).toBe(playlist.albums[0].id));
+    expect(loadState('alice').queue).toHaveLength(playlist.albums.length - 1);
+  });
+
+  it('keeps the old session when an album fails to load', async () => {
+    seed();
+    select();
+    vi.mocked(getAlbum).mockImplementation((id) =>
+      id === playlist.albums[5].id ? Promise.reject(new Error('x')) : Promise.resolve({ ...blue, id }),
+    );
+    const controller = await renderApp();
+    controller.emit('Playing');
+    const start = await screen.findByRole('button', { name: 'Start playlist' });
+    await waitFor(() => expect(start).toBeEnabled());
+    fireEvent.click(start);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(playlist.albums[5].name);
+    expect(controller.startSelection).not.toHaveBeenCalled();
+    expect(loadState('alice').current?.id).toBe('blue');
+  });
+
+  it('cannot start for a remembered account until /me confirms it', async () => {
+    seed();
+    select();
+    localStorage.setItem('vynl:last-account', 'alice');
+    vi.mocked(getMe).mockReturnValue(new Promise(() => {}));
+    const controller = await renderApp();
+    controller.emit('Resting');
+
+    const start = await screen.findByRole('button', { name: 'Start playlist' });
+    expect(start).toBeDisabled();
+    fireEvent.click(start);
+    expect(getAlbum).not.toHaveBeenCalled();
+    expect(controller.activate).not.toHaveBeenCalled();
+  });
+
+  it.each(['Starting', 'Follower', 'AuthLost', 'NotAllowlisted', 'PremiumRequired'] as const)(
+    'cannot be submitted while %s',
+    async (status) => {
+      seed();
+      select();
+      const controller = await renderApp();
+      controller.emit(status);
+      const start = await screen.findByRole('button', { name: 'Start playlist' });
+      expect(start).toBeDisabled();
+    },
+  );
+
+  it('does not re-import after a reload once started', async () => {
+    seed('alice', null, []);
+    select();
+    const controller = await renderApp();
+    controller.emit('Resting');
+    const start = await screen.findByRole('button', { name: 'Start playlist' });
+    await waitFor(() => expect(start).toBeEnabled());
+    fireEvent.click(start);
+    await waitFor(() => expect(window.location.search).toBe(''));
+
+    document.body.innerHTML = '';
+    registry = createFakeLockManager.registry();
+    deps.locks = createFakeLockManager(registry);
+    render(<App deps={deps} />);
+    await waitFor(() => expect(controllers).toHaveLength(2));
+    controllers[1].emit('Resting');
+    await act(async () => {});
+
+    expect(screen.queryByRole('button', { name: 'Start playlist' })).toBeNull();
+    expect(controllers[1].startSelection).not.toHaveBeenCalled();
+    expect(controllers[0].startSelection).toHaveBeenCalledTimes(1);
   });
 });

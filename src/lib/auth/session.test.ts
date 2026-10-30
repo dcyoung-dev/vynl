@@ -65,6 +65,57 @@ describe('startSignIn', () => {
   });
 });
 
+describe('playlist selection through sign-in', () => {
+  const callback = (code: string, state: string) => new URL(`http://localhost:3000/vynl/callback/?code=${code}&state=${state}`);
+
+  it('stores only a known slug in the pending transaction', async () => {
+    vi.spyOn(window.location, 'assign').mockImplementation(() => {});
+    await startSignIn({ playlist: 'album-rotation' });
+    expect(storedAuth().pkce.playlist).toBe('album-rotation');
+    await startSignIn({ playlist: 'https://evil.example/' });
+    expect(storedAuth().pkce).not.toHaveProperty('playlist');
+    await startSignIn();
+    expect(storedAuth().pkce).not.toHaveProperty('playlist');
+  });
+
+  it('returns the selection after a successful exchange, to every caller, and keeps it out of storage', async () => {
+    vi.spyOn(window.location, 'assign').mockImplementation(() => {});
+    await startSignIn({ playlist: 'album-rotation' });
+    const { state } = storedAuth().pkce;
+    stubTokenEndpoint([tokenResponse(), tokenResponse()]);
+    const url = callback('code-sel-1', state);
+
+    const results = await Promise.all([completeSignIn(url), completeSignIn(url)]);
+
+    expect(results).toEqual([{ playlist: 'album-rotation' }, { playlist: 'album-rotation' }]);
+    expect(await completeSignIn(url)).toEqual({ playlist: 'album-rotation' });
+    expect(JSON.stringify(storedAuth())).not.toContain('album-rotation');
+  });
+
+  it('returns no selection for a normal sign-in or a tampered slug', async () => {
+    storePendingSignIn('plain');
+    stubTokenEndpoint([tokenResponse(), tokenResponse()]);
+    expect(await completeSignIn(callback('code-sel-2', 'plain'))).toEqual({});
+
+    localStorage.setItem(
+      AUTH_STORAGE_KEY,
+      JSON.stringify({ pkce: { state: 'tampered', verifier: 'v', playlist: '//evil.example' } }),
+    );
+    expect(await completeSignIn(callback('code-sel-3', 'tampered'))).toEqual({});
+  });
+
+  it('gives no selection on state mismatch, provider denial or token failure, and keeps no pending selection', async () => {
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ pkce: { state: 's', verifier: 'v', playlist: 'album-rotation' } }));
+    stubTokenEndpoint([]);
+    await expect(completeSignIn(callback('code-sel-4', 'other'))).rejects.toThrow();
+    await expect(completeSignIn(new URL('http://localhost:3000/vynl/callback/?error=access_denied&state=s'))).rejects.toThrow();
+
+    stubTokenEndpoint([{ status: 400, body: { error: 'invalid_grant' } }]);
+    await expect(completeSignIn(callback('code-sel-5', 's'))).rejects.toThrow();
+    expect(JSON.stringify(storedAuth())).not.toContain('album-rotation');
+  });
+});
+
 describe('completeSignIn', () => {
   it('rejects a callback whose state does not match and makes no token request', async () => {
     storePendingSignIn('expected-state');
