@@ -21,8 +21,8 @@ export default function Turntable({ album, position, status }: TurntableProps) {
             <CoverArt album={album} />
           </div>
           <div data-testid="now-playing" className="min-w-0 text-left text-vanilla-custard">
-            {currentTrack && <p className="font-display text-xl">{currentTrack.name}</p>}
-            <p className="text-sm">
+            {currentTrack && <p className="break-words font-display text-xl">{currentTrack.name}</p>}
+            <p className="break-words text-sm">
               {album.name} · {album.artists.join(', ')}
             </p>
           </div>

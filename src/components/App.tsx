@@ -266,7 +266,7 @@ function Shell({ locks, createController = createPlaybackController, authLost, o
         />
         <div
           data-testid="app-body"
-          className={`grid flex-1 grid-cols-1 content-start gap-8 p-4 md:grid-cols-[minmax(0,1fr)_20rem] ${drawer.open ? 'md:pl-100' : ''}`}
+          className={`grid flex-1 grid-cols-1 content-start gap-8 p-4 lg:grid-cols-[minmax(0,1fr)_20rem] ${drawer.open ? 'xl:pl-96' : ''}`}
         >
           <TrackListPanel
             tracks={current?.tracks ?? []}
@@ -274,7 +274,7 @@ function Shell({ locks, createController = createPlaybackController, authLost, o
             onMoveNeedle={noControls ? undefined : (index) => void controller?.moveNeedle(index)}
             disabled={status === 'Starting'}
           />
-          <main className="order-2 flex min-w-0 flex-col items-center gap-6 md:order-1">
+          <main className="order-2 flex min-w-0 flex-col items-center gap-6 lg:order-1">
             <StatusBanner
               status={status}
               deviceName={snapshot.device?.name ?? null}

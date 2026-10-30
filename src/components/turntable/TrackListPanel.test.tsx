@@ -15,7 +15,9 @@ describe('TrackListPanel', () => {
     expect(screen.getByRole('complementary', { name: 'Album tracks' })).toBeInTheDocument();
     expect(screen.queryByRole('complementary', { name: 'Track list drawer' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Tracks' })).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByRole('button', { name: 'Tracks' })).toHaveClass('self-start');
+    expect(screen.getByRole('button', { name: 'Tracks' })).toHaveClass('self-start', 'lg:hidden');
+    expect(screen.getByRole('complementary', { name: 'Album tracks' })).toHaveClass('hidden', 'lg:block');
+    expect(screen.getByRole('complementary', { name: 'Album tracks' }).className).not.toMatch(/\bmd:/);
   });
 
   it('opens the mobile drawer with the same ordered tracks and closes with Escape', () => {

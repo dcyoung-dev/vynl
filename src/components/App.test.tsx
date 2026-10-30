@@ -310,12 +310,24 @@ describe('signed in', () => {
     const queue = screen.getByRole('heading', { name: 'Up next' }).closest('section');
     const trackRail = screen.getByRole('complementary', { name: 'Album tracks' });
 
-    expect(body.className).toMatch(/md:grid-cols-/);
+    expect(body.className).toMatch(/lg:grid-cols-/);
+    expect(body.className).not.toMatch(/\bmd:/);
     expect(body).toHaveClass('content-start');
     expect(queue?.parentElement?.parentElement).toBe(main);
     expect(turntable.compareDocumentPosition(queue!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(trackRail.parentElement).toBe(body);
-    expect(trackRail).toHaveClass('hidden', 'md:block');
+    expect(trackRail).toHaveClass('hidden', 'lg:block');
+  });
+
+  it('pushes the player aside for an open album drawer only from the xl breakpoint', async () => {
+    seed('alice', null, []);
+    await renderApp();
+    const body = screen.getByTestId('app-body');
+    expect(body).toHaveClass('xl:pl-96');
+    expect(body.className).not.toMatch(/\b(?:sm|md|lg):pl-/);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close browsing' }));
+    expect(body).not.toHaveClass('xl:pl-96');
   });
 });
 

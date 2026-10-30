@@ -97,6 +97,22 @@ describe('BrowseDrawer', () => {
     expect(screen.getByRole('button', { name: 'Browse' })).toHaveFocus();
   });
 
+  it('shows a backdrop only while open, and clicking it closes the drawer and focuses the toggle', async () => {
+    setup({ current: full });
+    expect(screen.queryByTestId('browse-backdrop')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Browse' }));
+    const backdrop = screen.getByTestId('browse-backdrop');
+    expect(backdrop).toHaveAttribute('aria-hidden', 'true');
+    expect(backdrop).toHaveClass('xl:hidden');
+    await screen.findByText('Blue');
+
+    fireEvent.click(backdrop);
+    expect(drawer()).not.toBeInTheDocument();
+    expect(screen.queryByTestId('browse-backdrop')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Browse' })).toHaveFocus();
+  });
+
   it('Play now closes it', async () => {
     vi.mocked(getAlbum).mockResolvedValue(full);
     setup();

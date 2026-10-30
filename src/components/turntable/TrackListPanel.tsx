@@ -46,7 +46,7 @@ export default function TrackListPanel({
         aria-expanded={open}
         aria-controls={drawerId}
         onClick={() => setOpen(true)}
-        className="self-start justify-self-start rounded-full border border-muted-teal px-3 py-1.5 text-vanilla-custard hover:bg-night-bordeaux/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-honey-bronze md:hidden"
+        className="self-start justify-self-start rounded-full border border-muted-teal px-3 py-1.5 text-vanilla-custard hover:bg-night-bordeaux/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-honey-bronze lg:hidden"
       >
         Tracks
       </button>
@@ -55,7 +55,7 @@ export default function TrackListPanel({
         aria-label="Track list drawer"
         hidden={!open}
         onKeyDown={onKeyDown}
-        className="fixed inset-y-0 right-0 z-30 flex w-full max-w-sm flex-col gap-4 overflow-y-auto border-l border-muted-teal bg-dark-slate p-4 text-vanilla-custard shadow-2xl shadow-neutral-950/60 transition-[translate] duration-300 starting:translate-x-full motion-reduce:transition-none md:hidden"
+        className="fixed inset-y-0 right-0 z-30 flex w-full max-w-sm flex-col gap-4 overflow-y-auto border-l border-muted-teal bg-dark-slate p-4 text-vanilla-custard shadow-2xl shadow-neutral-950/60 transition-[translate] duration-300 starting:translate-x-full motion-reduce:transition-none lg:hidden"
       >
         <div className="flex items-center justify-between gap-2">
           <h2 className="font-display text-xl">Tracks</h2>
@@ -73,7 +73,7 @@ export default function TrackListPanel({
         </div>
         {open && <TrackList tracks={tracks} currentIndex={currentIndex} onMoveNeedle={onMoveNeedle} disabled={disabled} />}
       </aside>
-      <aside aria-label="Album tracks" className="hidden min-w-0 md:order-2 md:block">
+      <aside aria-label="Album tracks" className="hidden min-w-0 lg:order-2 lg:block">
         <h2 className="mb-3 font-display text-xl">Tracks</h2>
         <TrackList tracks={tracks} currentIndex={currentIndex} onMoveNeedle={onMoveNeedle} disabled={disabled} />
       </aside>
