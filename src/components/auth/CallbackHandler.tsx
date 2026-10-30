@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { completeSignIn } from '../../lib/auth/session';
-import { appPath } from '../../lib/url';
+import { appPath, playlistSelectionPath } from '../../lib/url';
 
 export default function CallbackHandler() {
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     completeSignIn(new URL(window.location.href)).then(
-      () => {
+      ({ playlist }) => {
         window.history.replaceState(null, '', appPath('callback'));
-        window.location.replace(appPath());
+        window.location.replace(playlist ? playlistSelectionPath(playlist) : appPath());
       },
       () => setFailed(true),
     );
