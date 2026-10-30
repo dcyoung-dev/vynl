@@ -50,6 +50,8 @@ bun run dev
 
 `bun run dev:demo` runs the real app against an in-browser fake of Spotify, so you can try the player and check layouts without an account. It uses its own origin (port 4322), so its sign-in and saved queue live in that origin's storage and never touch a real session on port 4321. The fake is dev-only: it is gated on `import.meta.env.DEV`, so production builds never include it.
 
+Shared album playlists work in the demo. Open `http://127.0.0.1:4322/vynl/?playlist=album-rotation` and **Start playlist** asks before replacing the seeded record, then plays the first album. The fake builds an album with generated tracks and artwork for every album in `src/lib/playlists/catalog.ts`, so it follows catalogue edits. Two things still use the real Spotify: signing in with a playlist selected (`startSignIn`) redirects to real Spotify, and the public pages under `/playlists/` show real Spotify artwork, because they render the catalogue snapshots.
+
 ## Shared album playlists
 
 `/playlists/` lists curated album selections, and each has a stable public page such as `/playlists/album-rotation/`. The pages are static HTML. Anyone can open them without signing in, and sharing one means sharing its address.
