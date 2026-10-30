@@ -38,9 +38,9 @@ const albumRotationRows: Row[] = [
 
 export const playlists: readonly Playlist[] = [
   {
-    slug: 'album-rotation',
-    title: 'Album rotation',
-    description: 'Ten albums to put on, one after another.',
+    slug: 'modern-ska',
+    title: 'Modern Ska',
+    description: 'A selection of modern ska albums to get you skanking.',
     albums: albumRotationRows.map(album),
   },
 ];
