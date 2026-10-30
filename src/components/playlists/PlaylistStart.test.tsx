@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { findPlaylist } from '../../lib/playlists/catalog';
 import { getAlbum } from '../../lib/spotify/api';
 import { QuotaExceededError } from '../../lib/spotify/errors';
@@ -24,7 +24,7 @@ function full(id: string): Album {
 let order: string[];
 let controller: NonNullable<PlaylistStartProps['controller']>;
 let session: { hasCurrent: boolean; queued: number };
-let onStarted: ReturnType<typeof vi.fn>;
+let onStarted: Mock<() => void>;
 
 function props(patch: Partial<PlaylistStartProps> = {}): PlaylistStartProps {
   return {
