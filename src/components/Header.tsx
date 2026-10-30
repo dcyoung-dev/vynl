@@ -1,5 +1,5 @@
 import type { RefObject } from 'react';
-import { appPath } from '../lib/url';
+import { appPath, playlistsPath } from '../lib/url';
 
 export interface HeaderProps {
   signedIn: boolean;
@@ -35,6 +35,9 @@ export default function Header({ signedIn, onSignIn, onSignOut, onForget, drawer
         <h1 className="font-display text-3xl text-honey-bronze">Vynl</h1>
       </div>
       <nav aria-label="Account" className="flex flex-wrap items-center gap-1">
+        <a href={playlistsPath()} className={quiet}>
+          Playlists
+        </a>
         <a href={appPath('privacy')} className={quiet}>
           Privacy
         </a>

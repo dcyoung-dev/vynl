@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { appPath } from '../lib/url';
+import { appPath, playlistsPath } from '../lib/url';
 import Header, { type HeaderProps } from './Header';
 
 function setup(props: Partial<HeaderProps> = {}) {
@@ -23,6 +23,14 @@ describe('Header', () => {
   it('links to the privacy page under the base path', () => {
     setup();
     expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', appPath('privacy'));
+  });
+
+  it('links to the public playlists in both signed-in and signed-out states', () => {
+    setup();
+    expect(screen.getByRole('link', { name: 'Playlists' })).toHaveAttribute('href', playlistsPath());
+    cleanup();
+    setup({ signedIn: false, drawerToggle: undefined });
+    expect(screen.getByRole('link', { name: 'Playlists' })).toHaveAttribute('href', playlistsPath());
   });
 
   it('offers sign out and Forget me on this browser when signed in', () => {

@@ -2,7 +2,8 @@ import { useId } from 'react';
 import { useAppState } from '../../lib/store/AppState';
 import type { Album } from '../../lib/store/queue';
 import { usePlayNow } from '../browse/PlayNow';
-import { primaryButton, secondaryButton, spotifyAlbumUrl, spotifyLink } from '../browse/AlbumCard';
+import { spotifyAlbumUrl } from '../../lib/spotify/links';
+import { primaryButton, secondaryButton, spotifyLink } from '../browse/AlbumCard';
 
 export interface QueuePanelProps {
   /** KTD8: a follower tab lists the queue without "Move up", "Move down" or "Remove". */

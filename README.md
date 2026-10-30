@@ -50,6 +50,16 @@ bun run dev
 
 `bun run dev:demo` runs the real app against an in-browser fake of Spotify, so you can try the player and check layouts without an account. It uses its own origin (port 4322), so its sign-in and saved queue live in that origin's storage and never touch a real session on port 4321. The fake is dev-only: it is gated on `import.meta.env.DEV`, so production builds never include it.
 
+## Shared album playlists
+
+`/playlists/` lists curated album selections, and each has a stable public page such as `/playlists/album-rotation/`. The pages are static HTML. Anyone can open them without signing in, and sharing one means sharing its address.
+
+A playlist is an ordered list of albums. **Play in Vynl** opens the player with that selection chosen. Nothing plays until the listener presses **Start playlist**, after signing in with their own Spotify account if needed. Starting loads every album first, then replaces the current record and the whole queue, and plays the first album from the beginning. If something is on the turntable or in the queue, Vynl asks before replacing it. If any album fails to load, nothing changes and the error offers a retry. Reloading or revisiting never starts or re-imports a playlist.
+
+Browsing is public, but playback is not. Playing still needs Spotify Premium, and while the Spotify app is in development mode only the five allowlisted users can use the API. Anyone else can open the pages and sign in, but playback fails. Navigating from a playlist page to the player reloads the site, so audio that is already playing stops.
+
+To add a playlist, add an entry to `playlists` in `src/lib/playlists/catalog.ts` with a URL-safe `slug`, a title, a description and its albums. Each album needs its Spotify ID, name, artists and artwork URL. The index and the page are built from the data, so no route file is needed. Keep a published slug stable, because it is part of shared links. Redeploy to publish.
+
 ## Palette
 
 The palette is defined as Tailwind theme colours in OKLCH in `src/styles/global.css`. Use the classes, such as `bg-dark-slate`, `text-vanilla-custard`, `bg-honey-bronze`, `border-muted-teal` and `bg-night-bordeaux`, not hex values or custom CSS.

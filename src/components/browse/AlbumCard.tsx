@@ -1,12 +1,9 @@
 import { useCallback, useRef, useState } from 'react';
 import { getAlbum, type AlbumPage, type AlbumSummary } from '../../lib/spotify/api';
+import { spotifyAlbumUrl } from '../../lib/spotify/links';
 import { QuotaExceededError } from '../../lib/spotify/errors';
 import { useAppState } from '../../lib/store/AppState';
 import { usePlayNow } from './PlayNow';
-
-export function spotifyAlbumUrl(id: string): string {
-  return `https://open.spotify.com/album/${encodeURIComponent(id)}`;
-}
 
 /** KTD3: the quota error carries its own message; anything else gets the caller's wording. */
 export function loadErrorMessage(error: unknown, fallback: string): string {

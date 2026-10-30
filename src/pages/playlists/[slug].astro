@@ -1,0 +1,19 @@
+---
+import Base from '../../layouts/Base.astro';
+import PublicNav from '../../components/playlists/PublicNav.astro';
+import PlaylistDetail from '../../components/playlists/PlaylistDetail';
+import { playlists } from '../../lib/playlists/catalog';
+
+export function getStaticPaths() {
+  return playlists.map((playlist) => ({ params: { slug: playlist.slug }, props: { playlist } }));
+}
+
+const { playlist } = Astro.props;
+---
+
+<Base title={`${playlist.title} · Vynl`}>
+  <PublicNav />
+  <main class="mx-auto flex max-w-2xl flex-col gap-6 p-4 sm:p-8">
+    <PlaylistDetail playlist={playlist} />
+  </main>
+</Base>

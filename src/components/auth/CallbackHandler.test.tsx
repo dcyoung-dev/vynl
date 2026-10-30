@@ -53,4 +53,31 @@ describe('CallbackHandler', () => {
     expect(new URL(window.location.href).searchParams.has('code')).toBe(false);
     expect(window.location.href).not.toContain('cb-code-2');
   });
+
+  it('returns to the root with the selected playlist after a successful sign-in', async () => {
+    localStorage.setItem(
+      AUTH_STORAGE_KEY,
+      JSON.stringify({ pkce: { state: 'sel', verifier: 'verifier-1', playlist: 'album-rotation' } }),
+    );
+    history.replaceState(null, '', '/vynl/callback/?code=cb-code-3&state=sel');
+    stubTokenEndpoint([tokenResponse()]);
+
+    render(<CallbackHandler />);
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/vynl/?playlist=album-rotation'));
+  });
+
+  it('does not select a playlist when the exchange fails', async () => {
+    localStorage.setItem(
+      AUTH_STORAGE_KEY,
+      JSON.stringify({ pkce: { state: 'sel', verifier: 'verifier-1', playlist: 'album-rotation' } }),
+    );
+    history.replaceState(null, '', '/vynl/callback/?error=access_denied&state=sel');
+    stubTokenEndpoint([]);
+
+    render(<CallbackHandler />);
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+  });
 });

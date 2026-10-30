@@ -341,6 +341,133 @@ describe('playing an album', () => {
   });
 });
 
+describe('starting a whole selection', () => {
+  const D = album('d');
+
+  it('installs the first album as current and the rest queued in one transition, and plays it from zero', async () => {
+    await start({ current: A, queue: [D], position: { trackIndex: 3, positionMs: 32_647 } });
+    const dispatched: string[] = [];
+    const dispatch = store.dispatch;
+    store.dispatch = (action) => {
+      dispatched.push(action.type);
+      dispatch(action);
+    };
+
+    await expect(controller.startSelection([B, C, D])).resolves.toBe(true);
+
+    expect(dispatched.filter((type) => type === 'replaceSelection')).toHaveLength(1);
+    expect(store.getState().current).toEqual(B);
+    expect(store.getState().queue).toEqual([C, D]);
+    expect(store.getState().position).toEqual({ trackIndex: 0, positionMs: 0 });
+    expect(fake.player.activateElement).toHaveBeenCalled();
+    expect(playsOf(B)).toEqual([
+      {
+        method: 'PUT',
+        path: '/me/player/play',
+        query: { device_id: 'vynl' },
+        body: { context_uri: B.uri, offset: { uri: B.tracks[0].uri }, position_ms: 0 },
+      },
+    ]);
+  });
+
+  it('does not change the selection it was given', async () => {
+    await start();
+    const albums = [B, C];
+
+    await controller.startSelection(albums);
+    store.dispatch({ type: 'remove', index: 0 });
+
+    expect(albums).toEqual([B, C]);
+  });
+
+  it('replaces nothing and reports failure with no albums or a disposed controller', async () => {
+    await start({ current: A, queue: [D], position: { trackIndex: 2, positionMs: 5_000 } });
+    const before = store.getState();
+    await expect(controller.startSelection([])).resolves.toBe(false);
+    expect(store.getState()).toEqual(before);
+
+    controller.dispose();
+    await expect(controller.startSelection([B, C])).resolves.toBe(false);
+    expect(store.getState()).toEqual(before);
+    expect(web.commands()).toEqual([]);
+  });
+
+  it('replaces nothing and says so when no Spotify player is available yet', async () => {
+    store = createStore({ current: A, queue: [D] });
+    controller = createController({ store, createWorker: () => (worker = new InlineSchedulerWorker()), visibility });
+    controller.start();
+    fake.finishLoading();
+    await settle();
+    const untouched = store.getState();
+    await expect(controller.startSelection([B, C])).resolves.toBe(false);
+    expect(store.getState()).toEqual(untouched);
+    expect(controller.getSnapshot().notice?.message).toMatch(/no spotify player/i);
+    expect(web.commands()).toEqual([]);
+  });
+
+  it("ignores the replaced record's end signal while the new first album is still starting", async () => {
+    await start({ queue: [D] });
+    await playingInTab(A, 9);
+    await vi.advanceTimersByTimeAsync(TRACK_MS);
+    let release: (response: { status: number }) => void = () => {};
+    web.respondOnce('PUT', '/me/player/repeat', new Promise((resolve) => (release = resolve)));
+
+    const started = controller.startSelection([B, C]);
+    await settle();
+    sdkAutoplay(A);
+    sdkAutoplay(A);
+    await settle();
+    release({ status: 204 });
+    await started;
+    await settle();
+
+    expect(store.getState().current).toEqual(B);
+    expect(store.getState().queue).toEqual([C]);
+    expect(playsOf(C)).toEqual([]);
+    expect(playsOf(D)).toEqual([]);
+  });
+
+  it('advances from the new first album to the second exactly once when it completes', async () => {
+    await start();
+    await controller.startSelection([B, C]);
+    sdkTrack(B, 9);
+    await settle();
+    await vi.advanceTimersByTimeAsync(TRACK_MS);
+
+    sdkAutoplay(B);
+    sdkAutoplay(B);
+    await settle();
+
+    expect(playsOf(C)).toHaveLength(1);
+    expect(store.getState().current).toEqual(C);
+    expect(store.getState().queue).toEqual([]);
+  });
+
+  it('keeps the installed selection and shows the failure when Spotify rejects the play command', async () => {
+    await start({ current: A });
+    web.respondOnce('PUT', '/me/player/play', {
+      status: 500,
+      body: { error: { status: 500, message: 'Server error' } },
+    });
+
+    await expect(controller.startSelection([B, C])).resolves.toBe(true);
+
+    expect(store.getState().current).toEqual(B);
+    expect(store.getState().queue).toEqual([C]);
+    expect(controller.getSnapshot().notice?.message).toMatch(/spotify/i);
+  });
+
+  it('still plays and skips ordinary albums as before afterwards', async () => {
+    await start();
+    await controller.startSelection([B, C]);
+    await controller.playAlbum(D);
+
+    expect(store.getState().current).toEqual(D);
+    expect(store.getState().queue).toEqual([C]);
+    expect(playsOf(D)).toHaveLength(1);
+  });
+});
+
 describe('album end in the tab (KTD5 as corrected by the spike)', () => {
   async function onLastTrack(queue: Album[]) {
     await start({ queue });

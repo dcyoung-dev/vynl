@@ -1,0 +1,13 @@
+---
+import Base from '../../layouts/Base.astro';
+import PublicNav from '../../components/playlists/PublicNav.astro';
+import PlaylistCatalog from '../../components/playlists/PlaylistCatalog';
+import { playlists } from '../../lib/playlists/catalog';
+---
+
+<Base title="Playlists · Vynl">
+  <PublicNav />
+  <main class="mx-auto flex max-w-2xl flex-col gap-6 p-4 sm:p-8">
+    <PlaylistCatalog playlists={playlists} />
+  </main>
+</Base>

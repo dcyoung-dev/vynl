@@ -77,6 +77,14 @@ export interface PlaybackController {
   activate(): void;
   /** Plays `album` from the start, dropping the current one (KTD14). */
   playAlbum(album: Album): Promise<void>;
+  /**
+   * Replaces the current album and the whole queue with `albums` (the first current, the rest queued,
+   * from zero) and starts the first. Resolves `true` once the selection is installed, which says
+   * nothing about whether Spotify then played it: that shows up as status and notices. Resolves
+   * `false`, with nothing replaced, when there is nothing to install, no device to play on, or the
+   * controller is gone.
+   */
+  startSelection(albums: readonly Album[]): Promise<boolean>;
   /** Drops the needle at the start of `trackIndex` of the current album. */
   moveNeedle(trackIndex: number): Promise<void>;
   playPause(): Promise<void>;
@@ -562,6 +570,30 @@ export function createController({
       setPosition(START, true);
       update();
       return withDevice((deviceId) => startAlbum(album, deviceId, START));
+    },
+
+    startSelection(albums) {
+      activate();
+      let installed = false;
+      return enqueue(async () => {
+        const first = albums[0];
+        const deviceId = targetDevice();
+        if (!first) return;
+        if (!deviceId) {
+          showNotice('No Spotify player is available. Open Spotify on a device, or reload Vynl.');
+          return;
+        }
+        // Nothing from the previous record may advance past the new first album.
+        if (instance) instance.advanced = true;
+        scheduler?.cancel();
+        instance = null;
+        anchor = null;
+        store.dispatch({ type: 'replaceSelection', albums: [...albums] });
+        setPosition(START, true);
+        update();
+        installed = true;
+        await startAlbum(first, deviceId, START);
+      }).then(() => installed);
     },
 
     moveNeedle(trackIndex) {
