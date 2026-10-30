@@ -51,6 +51,7 @@ function fakeController(store: { dispatch(action: QueueAction): void }): FakeCon
     start: vi.fn(),
     activate: vi.fn(),
     playAlbum: vi.fn(resolved),
+    startSelection: vi.fn(() => Promise.resolve(true)),
     moveNeedle: vi.fn(resolved),
     playPause: vi.fn(resolved),
     next: vi.fn(resolved),

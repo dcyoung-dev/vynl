@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPersister, loadState, saveState, storageKey, type SavedState } from './persist';
-import type { Album } from './queue';
+import { initialQueueState, queueReducer, type Album } from './queue';
 
 function album(id: string): Album {
   return {
@@ -113,5 +113,22 @@ describe('createPersister', () => {
     localStorage.setItem(storageKey('alice'), JSON.stringify({ version: 1, queue: [], current: null }));
 
     expect(loadState('alice').position).toEqual({ trackIndex: 0, positionMs: 0 });
+  });
+
+  it('reloads an installed selection under the account and leaves other accounts alone', () => {
+    saveState('bob', saved);
+    const selected = queueReducer(
+      { ...initialQueueState(), ...saved },
+      { type: 'replaceSelection', albums: [album('a'), album('b'), album('c')] },
+    );
+
+    saveState('alice', selected);
+
+    expect(loadState('alice')).toEqual({
+      current: album('a'),
+      queue: [album('b'), album('c')],
+      position: { trackIndex: 0, positionMs: 0 },
+    });
+    expect(loadState('bob')).toEqual(saved);
   });
 });
